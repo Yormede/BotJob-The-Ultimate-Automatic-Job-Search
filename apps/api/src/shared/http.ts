@@ -61,7 +61,7 @@ export function corsPreflight() {
       "Access-Control-Allow-Origin": process.env.WEB_ORIGIN ?? "http://127.0.0.1:5173",
       "Access-Control-Allow-Credentials": "true",
       "Access-Control-Allow-Headers": "content-type",
-      "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      "Access-Control-Allow-Methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
     },
   });
 }

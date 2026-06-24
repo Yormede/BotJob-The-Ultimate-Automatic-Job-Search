@@ -65,5 +65,19 @@ bun test
 - `POST /api/auth/login`
 - `GET /api/auth/session`
 - `POST /api/auth/logout`
+- `GET /api/dashboard`
+- `GET /api/applications`
+- `POST /api/applications`
+- `GET /api/applications/:id`
+- `PATCH /api/applications/:id`
+- `DELETE /api/applications/:id`
+- `GET /api/applications/:id/events`
+- `POST /api/applications/:id/events`
+- `GET /api/job-axes`
+- `POST /api/job-axes`
+- `PATCH /api/job-axes/:id`
+- `DELETE /api/job-axes/:id`
+- `GET /api/ai-profile`
+- `PUT /api/ai-profile`
 
-Skipped: verification email, rate limit persistant, candidatures CRUD. Add when the auth slice is validated against a real PostgreSQL instance.
+Skipped for now: email verification, persistent rate limiting, AI document generation and file storage. Those need the next database migration before implementation.
