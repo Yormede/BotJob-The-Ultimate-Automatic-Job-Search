@@ -10,6 +10,11 @@ type User = {
   lastName: string;
 };
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -201,11 +206,38 @@ function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { name: stri
 }
 
 function Dashboard(props: { user: User; onLogout: () => void }) {
+  const [assistantPrompt, setAssistantPrompt] = useState("");
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content: "Collez une offre et je prepare une candidature de demonstration avec un CV HTML/CSS.",
+    },
+  ]);
+  const [cvPreview, setCvPreview] = useState(generateDemoCv(props.user, "Developpeur Full Stack"));
+
   const recent = [
     ["Developpeur IA alternance", "Nova Labs", "En cours"],
     ["Frontend React", "Atelier Signal", "Relance"],
     ["Assistant data junior", "DataForge", "Envoyee"],
   ];
+
+  function askAssistant() {
+    const prompt = assistantPrompt.trim();
+    if (!prompt) return;
+
+    const target = inferTarget(prompt);
+    setCvPreview(generateDemoCv(props.user, target));
+    setMessages((current) => [
+      ...current,
+      { role: "user", content: prompt },
+      {
+        role: "assistant",
+        content:
+          "J'ai prepare un CV HTML/CSS de demonstration, une structure ATS 1 colonne et une accroche adaptee a l'offre. En V1 connectee, cette action creera aussi la candidature en base.",
+      },
+    ]);
+    setAssistantPrompt("");
+  }
 
   return (
     <main className="dashboard">
@@ -233,14 +265,28 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
             <p className="eyebrow">Assistant IA</p>
             <h2>Bon retour {props.user.firstName}</h2>
             <p>Je peux vous aider a creer des candidatures, relancer vos contacts et optimiser votre suivi.</p>
+            <div className="assistant-chat" aria-label="Conversation assistant">
+              {messages.map((message, index) => (
+                <article className={`chat-bubble ${message.role}`} key={`${message.role}-${index}`}>
+                  {message.content}
+                </article>
+              ))}
+            </div>
             <div className="quick-actions">
-              <button>Creer une candidature</button>
-              <button>Voir mes prochaines actions</button>
-              <button>Optimiser mon CV</button>
+              <button onClick={() => setAssistantPrompt("Cree un CV pour une offre React TypeScript")}>Creer une candidature</button>
+              <button onClick={() => setAssistantPrompt("Quelles candidatures dois-je relancer ?")}>Voir mes prochaines actions</button>
+              <button onClick={() => setAssistantPrompt("Optimise mon CV pour developpeur full stack")}>Optimiser mon CV</button>
             </div>
             <label className="assistant-input">
-              <input placeholder="Pose-moi une question..." />
-              <button>Envoyer</button>
+              <input
+                placeholder="Collez une offre ou posez une question..."
+                value={assistantPrompt}
+                onChange={(event) => setAssistantPrompt(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") askAssistant();
+                }}
+              />
+              <button onClick={askAssistant}>Envoyer</button>
             </label>
           </section>
 
@@ -268,6 +314,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
               <button>Lettre de motivation</button>
               <button>Message d'approche</button>
             </div>
+            <div className="cv-preview" dangerouslySetInnerHTML={{ __html: cvPreview }} />
           </section>
 
           <section className="axes-panel">
@@ -303,6 +350,54 @@ function PanelTitle(props: { title: string; action?: string }) {
       {props.action && <button>{props.action}</button>}
     </div>
   );
+}
+
+function generateDemoCv(user: User, target: string) {
+  const title = escapeHtml(target.replace(/^./, (letter) => letter.toUpperCase()));
+  const firstName = escapeHtml(user.firstName);
+  const lastName = escapeHtml(user.lastName);
+  return `
+    <article class="demo-cv">
+      <header>
+        <h3>${firstName} ${lastName}</h3>
+        <p>${title} - React, TypeScript, Bun, PostgreSQL</p>
+      </header>
+      <section>
+        <strong>Profil</strong>
+        <p>Candidat fullstack oriente produit, capable de concevoir une application en couches, securiser les acces et livrer un MVP testable.</p>
+      </section>
+      <section>
+        <strong>Experiences ciblees</strong>
+        <ul>
+          <li>Creation d'une API Bun TypeScript avec sessions serveur et repositories SQL.</li>
+          <li>Conception PostgreSQL avec relations, contraintes, index et JSONB.</li>
+          <li>Maquettage Figma et transformation des besoins en parcours utilisateur.</li>
+        </ul>
+      </section>
+    </article>
+  `;
+}
+
+function inferTarget(prompt: string) {
+  const lowerPrompt = prompt.toLowerCase();
+  if (lowerPrompt.includes("react") || lowerPrompt.includes("typescript")) return "Developpeur React TypeScript";
+  if (lowerPrompt.includes("full stack") || lowerPrompt.includes("fullstack")) return "Developpeur Full Stack";
+  if (lowerPrompt.includes("data")) return "Assistant Data";
+  if (lowerPrompt.includes("ia") || lowerPrompt.includes("ai")) return "Developpeur IA";
+  return "Poste cible";
+}
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => {
+    const entities: Record<string, string> = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return entities[character];
+  });
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
