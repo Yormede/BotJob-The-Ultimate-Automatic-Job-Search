@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BotJob - Rendu Produit V1.1</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18202a;
+      --muted: #5d6876;
+      --line: #dce3ea;
+      --soft: #f5f7fa;
+      --panel: #ffffff;
+      --blue: #2354d8;
+      --cyan: #0f8b9f;
+      --green: #287a4f;
+      --red: #bf3d3d;
+      --gold: #a56a00;
+      --shadow: 0 18px 45px rgba(28, 42, 56, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: #eef2f6;
+      line-height: 1.5;
+    }
+
+    .hero {
+      min-height: 74vh;
+      display: grid;
+      align-items: end;
+      background:
+        linear-gradient(90deg, rgba(15, 27, 43, 0.88), rgba(22, 45, 69, 0.72)),
+        url("https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1800&q=80");
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+      padding: 56px 6vw 42px;
+    }
+
+    .hero-inner {
+      max-width: 1180px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 18px;
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #b9f3ff;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 34px;
+      height: 2px;
+      background: #b9f3ff;
+    }
+
+    h1 {
+      max-width: 880px;
+      margin: 0;
+      font-size: clamp(42px, 7vw, 88px);
+      line-height: 0.96;
+      letter-spacing: 0;
+    }
+
+    .hero p {
+      max-width: 760px;
+      margin: 24px 0 0;
+      font-size: clamp(18px, 2vw, 24px);
+      color: rgba(255, 255, 255, 0.86);
+    }
+
+    main {
+      max-width: 1180px;
+      margin: -30px auto 80px;
+      padding: 0 24px;
+    }
+
+    section {
+      margin: 44px 0;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(24, 32, 42, 0.08);
+      box-shadow: var(--shadow);
+      border-radius: 8px;
+      padding: 28px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .grid.cols-3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .grid.cols-2 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .stat {
+      border-left: 4px solid var(--blue);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 138px;
+    }
+
+    .stat:nth-child(2) {
+      border-color: var(--cyan);
+    }
+
+    .stat:nth-child(3) {
+      border-color: var(--green);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    p {
+      margin: 0 0 14px;
+      color: var(--muted);
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      background: #fff;
+    }
+
+    .badge {
+      display: inline-flex;
+      min-height: 28px;
+      align-items: center;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      background: var(--blue);
+      margin-bottom: 12px;
+    }
+
+    .badge.green { background: var(--green); }
+    .badge.gold { background: var(--gold); }
+    .badge.red { background: var(--red); }
+
+    .flow {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(125px, 1fr));
+      gap: 10px;
+      align-items: stretch;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .step {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 16px;
+      min-height: 150px;
+    }
+
+    .step span {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      margin-bottom: 12px;
+      color: #fff;
+      background: var(--blue);
+      font-weight: 800;
+    }
+
+    .step p {
+      font-size: 14px;
+      margin: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      text-align: left;
+      vertical-align: top;
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    th {
+      background: #f3f6f9;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #3a4653;
+      letter-spacing: 0.06em;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .callout {
+      border-left: 5px solid var(--red);
+      background: #fff7f6;
+      border-radius: 8px;
+      padding: 18px;
+    }
+
+    .callout strong {
+      color: var(--red);
+    }
+
+    .mermaid-wrap {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      overflow-x: auto;
+    }
+
+    .footer {
+      color: var(--muted);
+      font-size: 14px;
+      padding: 24px 0 0;
+    }
+
+    @media (max-width: 920px) {
+      .grid.cols-3,
+      .grid.cols-2,
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      .hero {
+        min-height: 66vh;
+        padding: 42px 24px;
+      }
+
+      main {
+        padding: 0 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-inner">
+      <div class="eyebrow">BotJob V1.1 · Produit · ATS · Automatisation controlee</div>
+      <h1>Generer des candidatures ciblees sans casser la confiance ATS.</h1>
+      <p>Une interface pour transformer une offre en CV PDF vectoriel, lettre, message d'approche et suivi local, avec validation humaine avant export.</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Resume Executif</h2>
+      <div class="grid cols-3">
+        <div class="stat">
+          <strong>80%</strong>
+          <p>Seuil minimum de pertinence avant de recommander une generation de candidature.</p>
+        </div>
+        <div class="stat">
+          <strong>ATS</strong>
+          <p>Mode strict pour produire un PDF textuel, selectionnable, vectoriel et plus facile a parser.</p>
+        </div>
+        <div class="stat">
+          <strong>1 clic</strong>
+          <p>Archivage de l'offre, des fichiers generes et du statut dans le tableau de suivi.</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Promesse Produit</h2>
+      <div class="cards">
+        <article class="card">
+          <span class="badge">1</span>
+          <h3>Coller une offre</h3>
+          <p>L'utilisateur fournit l'offre, l'entreprise et le contexte de candidature.</p>
+        </article>
+        <article class="card">
+          <span class="badge green">2</span>
+          <h3>Analyser</h3>
+          <p>BotJob extrait les mots-cles, estime le matching et propose un titre cible.</p>
+        </article>
+        <article class="card">
+          <span class="badge gold">3</span>
+          <h3>Configurer</h3>
+          <p>Template, photo, projets prioritaires et mode ATS sont confirmes avant generation.</p>
+        </article>
+        <article class="card">
+          <span class="badge red">4</span>
+          <h3>Exporter</h3>
+          <p>Le systeme compile un PDF vectoriel, les textes et l'historique de suivi.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>User Flow Principal</h2>
+      <div class="flow" aria-label="Flux principal de generation">
+        <div class="step"><span>1</span><h3>Capture</h3><p>Offre, URL, entreprise et texte brut entrent dans BotJob.</p></div>
+        <div class="step"><span>2</span><h3>Analyse</h3><p>L'IA extrait les competences, contraintes et mots-cles.</p></div>
+        <div class="step"><span>3</span><h3>Scoring</h3><p>Le systeme bloque ou signale les offres sous 80%.</p></div>
+        <div class="step"><span>4</span><h3>Options</h3><p>L'utilisateur choisit template, photo, titre et projets.</p></div>
+        <div class="step"><span>5</span><h3>Controle ATS</h3><p>Validation du gabarit, nettoyage et alerte si necessaire.</p></div>
+        <div class="step"><span>6</span><h3>Export</h3><p>PDF vectoriel, lettre, message et archivage local.</p></div>
+      </div>
+    </section>
+
+    <section class="grid cols-2">
+      <div class="panel">
+        <h2>Regle Maitresse</h2>
+        <p>Le template garde la forme. L'IA injecte le fond. Cette separation empeche les ruptures de layout et protege la compatibilite ATS.</p>
+        <div class="callout">
+          <strong>Alerte critique:</strong> si le mode ATS est active avec un gabarit 2 colonnes, BotJob doit avertir que l'extraction par les parseurs peut se degrader fortement.
+        </div>
+      </div>
+      <div class="panel">
+        <h2>Ecrans Clefs</h2>
+        <table>
+          <thead><tr><th>Ecran</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Dashboard</td><td>Voir les candidatures et statuts.</td></tr>
+            <tr><td>Pre-generation</td><td>Configurer le CV avant lancement.</td></tr>
+            <tr><td>Preview</td><td>Relire, ajuster, valider.</td></tr>
+            <tr><td>Templates</td><td>Gerer les gabarits et variables.</td></tr>
+            <tr><td>Agent IA</td><td>Expliquer, retoucher, assister.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Diagramme Produit</h2>
+      <div class="mermaid-wrap">
+        <pre class="mermaid">
+flowchart LR
+  U["Utilisateur"] --> UI["Interface BotJob"]
+  UI --> CFG["Configuration candidature"]
+  UI --> DASH["Tableau de suivi"]
+  UI --> TPL["Gestion templates"]
+  CFG --> AI["Agent IA contenu"]
+  AI --> MATCH["Analyse semantique + score"]
+  MATCH --> ATS["Controle ATS"]
+  TPL --> ATS
+  ATS --> GEN["Injection template fixe"]
+  GEN --> PDF["PDF vectoriel"]
+  GEN --> TXT["Lettre + message"]
+  PDF --> ARCH["Archivage local"]
+  TXT --> ARCH
+  ARCH --> DASH
+        </pre>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Parcours Utilisateur Principal</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Etape</th>
+            <th>Action</th>
+            <th>Reponse BotJob</th>
+            <th>Risque a maitriser</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Coller l'offre</td><td>Extraction du poste, entreprise, mots-cles</td><td>Texte incomplet ou brouillon</td></tr>
+          <tr><td>2</td><td>Consulter le score</td><td>Recommandation selon le seuil de 80%</td><td>Candidature trop eloignee</td></tr>
+          <tr><td>3</td><td>Regler les options</td><td>Template, photo, titre, projets</td><td>Mauvais angle de CV</td></tr>
+          <tr><td>4</td><td>Activer ATS</td><td>Nettoyage, controle colonnes, alerte</td><td>PDF mal parse</td></tr>
+          <tr><td>5</td><td>Generer</td><td>Injection du contenu dans le template verrouille</td><td>Rupture de mise en page</td></tr>
+          <tr><td>6</td><td>Valider le preview</td><td>Export final et archivage</td><td>Envoi sans relecture</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="panel">
+      <h2>Roadmap</h2>
+      <div class="cards">
+        <article class="card"><span class="badge">V1.1</span><h3>Generation</h3><p>Templates fixes, mode ATS, PDF vectoriel, archivage.</p></article>
+        <article class="card"><span class="badge green">V2</span><h3>Collecte</h3><p>Import d'offres, scoring, cout infrastructure et supervision.</p></article>
+        <article class="card"><span class="badge gold">V3</span><h3>Postulation</h3><p>Remplissage assiste, controle humain, formulaires complexes.</p></article>
+        <article class="card"><span class="badge red">V4</span><h3>Production</h3><p>Fusion globale, monitoring et boucle d'amelioration.</p></article>
+      </div>
+      <p class="footer">Rendu genere depuis les specifications BotJob V1.1. Le detail complet est disponible dans le fichier Markdown associe.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+    mermaid.initialize({ startOnLoad: true, theme: "base" });
+  </script>
+</body>
+</html>

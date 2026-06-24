@@ -1,0 +1,308 @@
+import React, { useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import "./styles.css";
+
+type User = {
+  id: string;
+  email: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+};
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
+
+async function api<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, {
+    credentials: "include",
+    headers: { "content-type": "application/json", ...init?.headers },
+    ...init,
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error ?? "Erreur API");
+  return data;
+}
+
+function App() {
+  const [user, setUser] = useState<User | null>(null);
+  const [route, setRoute] = useState(location.pathname);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    api<{ user: User | null }>("/api/auth/session")
+      .then((data) => setUser(data.user))
+      .catch(() => setUser(null));
+  }, []);
+
+  useEffect(() => {
+    const onPop = () => setRoute(location.pathname);
+    addEventListener("popstate", onPop);
+    return () => removeEventListener("popstate", onPop);
+  }, []);
+
+  function go(path: string) {
+    history.pushState(null, "", path);
+    setRoute(path);
+    setError("");
+  }
+
+  async function submitAuth(form: HTMLFormElement, mode: "login" | "register") {
+    const fields = Object.fromEntries(new FormData(form));
+    const payload =
+      mode === "login"
+        ? { login: fields.login, password: fields.password }
+        : fields;
+
+    const data = await api<{ user: User }>(`/api/auth/${mode}`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    setUser(data.user);
+    go("/dashboard");
+  }
+
+  async function logout() {
+    await api("/api/auth/logout", { method: "POST" });
+    setUser(null);
+    go("/login");
+  }
+
+  if (route === "/register") {
+    return (
+      <AuthShell
+        mode="register"
+        title="Creer votre espace BotJob"
+        subtitle="Configurez votre identite et votre premiere session privee."
+        switchLabel="Deja inscrit ? Se connecter"
+        onSwitch={() => go("/login")}
+      >
+        <AuthForm
+          error={error}
+          mode="register"
+          onSubmit={(form) => submitAuth(form, "register").catch((e) => setError(e.message))}
+        />
+      </AuthShell>
+    );
+  }
+
+  if (!user || route === "/login" || route === "/") {
+    return (
+      <AuthShell
+        mode="login"
+        title="Bon retour sur BotJob"
+        subtitle="Connectez-vous a votre espace prive."
+        switchLabel="Pas encore de compte ? Creer un compte"
+        onSwitch={() => go("/register")}
+      >
+        <AuthForm
+          error={error}
+          mode="login"
+          onSubmit={(form) => submitAuth(form, "login").catch((e) => setError(e.message))}
+        />
+      </AuthShell>
+    );
+  }
+
+  return <Dashboard user={user} onLogout={logout} />;
+}
+
+function AuthShell(props: {
+  mode: "login" | "register";
+  title: string;
+  subtitle: string;
+  switchLabel: string;
+  onSwitch: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className={`auth-page auth-page-${props.mode}`}>
+      <section className="brand-panel">
+        <div className="brand-row">
+          <span className="brand-mark">B</span>
+          <strong>BotJob</strong>
+        </div>
+        <div className="brand-copy">
+          <h1>Creez. Personnalisez. Postulez. Suivez.</h1>
+          <p>La suite privee pour generer des CV ATS, lettres de motivation, messages d'approche et suivre vos candidatures.</p>
+        </div>
+        <div className="pipeline-preview" aria-label="Parcours BotJob">
+          {["Offre", "CV ATS", "Lettre", "Suivi"].map((item) => (
+            <article key={item}>
+              <span className="line-icon"></span>
+              <strong>{item}</strong>
+              <small>{item === "Offre" ? "Analyse ciblee" : item === "Suivi" ? "Historique clair" : "Rendu controlable"}</small>
+            </article>
+          ))}
+        </div>
+        <p className="trust-note">Vos donnees sont chiffrees et restent 100% privees.</p>
+      </section>
+      <section className="auth-panel">
+        <h2>{props.title}</h2>
+        <p className="panel-subtitle">{props.subtitle}</p>
+        {props.children}
+        <button className="link-button" onClick={props.onSwitch}>{props.switchLabel}</button>
+      </section>
+    </main>
+  );
+}
+
+function AuthForm(props: {
+  mode: "login" | "register";
+  error: string;
+  onSubmit: (form: HTMLFormElement) => void;
+}) {
+  return (
+    <form
+      className="auth-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        props.onSubmit(event.currentTarget);
+      }}
+    >
+      {props.mode === "register" ? (
+        <>
+          <div className="split">
+            <Field name="firstName" placeholder="Prenom" />
+            <Field name="lastName" placeholder="Nom" />
+          </div>
+          <Field name="username" placeholder="Nom d'utilisateur" />
+          <Field name="email" type="email" placeholder="Email" />
+          <div className="split">
+            <Field name="phoneNumber" placeholder="Telephone" />
+            <Field name="password" type="password" placeholder="Mot de passe" minLength={8} />
+          </div>
+        </>
+      ) : (
+        <>
+          <Field name="login" placeholder="Email ou nom d'utilisateur" />
+          <Field name="password" type="password" placeholder="Mot de passe" />
+        </>
+      )}
+      {props.error && <p className="error">{props.error}</p>}
+      <button type="submit">{props.mode === "login" ? "Se connecter" : "Creer mon espace"}</button>
+      {props.mode === "login" && (
+        <>
+          <div className="divider">ou</div>
+          <button className="provider-button" type="button">Continuer avec Google</button>
+          <button className="provider-button" type="button">Continuer avec Apple</button>
+        </>
+      )}
+    </form>
+  );
+}
+
+function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { name: string }) {
+  return (
+    <label className="field">
+      <span>{props.placeholder}</span>
+      <input {...props} required={props.required ?? true} />
+    </label>
+  );
+}
+
+function Dashboard(props: { user: User; onLogout: () => void }) {
+  const recent = [
+    ["Developpeur IA alternance", "Nova Labs", "En cours"],
+    ["Frontend React", "Atelier Signal", "Relance"],
+    ["Assistant data junior", "DataForge", "Envoyee"],
+  ];
+
+  return (
+    <main className="dashboard">
+      <aside className="sidebar">
+        <div className="brand-row"><span className="brand-mark">B</span><strong>BotJob</strong></div>
+        <nav>
+          {["Dashboard", "Creer CV/LDM/message", "Candidatures", "Studio IA", "Settings"].map((item) => (
+            <a className={item === "Dashboard" ? "active" : ""} key={item}>{item}</a>
+          ))}
+        </nav>
+        <p className="trust-note">L'assistant gere ce qui est autorise, jamais vos donnees sensibles.</p>
+      </aside>
+
+      <section className="dashboard-main">
+        <header className="topbar">
+          <h1>Bonjour {props.user.firstName}</h1>
+          <div>
+            <span className="avatar">{props.user.firstName.slice(0, 1)}{props.user.lastName.slice(0, 1)}</span>
+            <button onClick={props.onLogout}>Deconnexion</button>
+          </div>
+        </header>
+
+        <div className="dashboard-grid">
+          <section className="assistant-panel">
+            <p className="eyebrow">Assistant IA</p>
+            <h2>Bon retour {props.user.firstName}</h2>
+            <p>Je peux vous aider a creer des candidatures, relancer vos contacts et optimiser votre suivi.</p>
+            <div className="quick-actions">
+              <button>Creer une candidature</button>
+              <button>Voir mes prochaines actions</button>
+              <button>Optimiser mon CV</button>
+            </div>
+            <label className="assistant-input">
+              <input placeholder="Pose-moi une question..." />
+              <button>Envoyer</button>
+            </label>
+          </section>
+
+          <section className="stats-panel">
+            <PanelTitle title="Candidatures ce mois" action="Configurer" />
+            <div className="stat-grid">
+              {[
+                ["24", "Candidatures"],
+                ["6", "Entretiens"],
+                ["8", "A relancer"],
+                ["50%", "Taux de reponse"],
+              ].map(([value, label]) => (
+                <article key={label}>
+                  <strong>{value}</strong>
+                  <span>{label}</span>
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="creation-panel">
+            <PanelTitle title="Creation rapide CV" />
+            <div className="creation-actions">
+              <button>CV ATS 1 colonne</button>
+              <button>Lettre de motivation</button>
+              <button>Message d'approche</button>
+            </div>
+          </section>
+
+          <section className="axes-panel">
+            <PanelTitle title="Axes de recherche" action="Modifier" />
+            {["Developpeur Full Stack", "Lyon, Paris, Remote", "React, Bun, SQL, Docker"].map((item) => (
+              <p key={item}>{item}</p>
+            ))}
+          </section>
+
+          <section className="recent-panel">
+            <PanelTitle title="Candidatures recentes" action="Voir tout" />
+            {recent.map(([title, company, status]) => (
+              <article className="job-row" key={title}>
+                <span className="doc-icon"></span>
+                <div>
+                  <strong>{title}</strong>
+                  <small>{company}</small>
+                </div>
+                <em>{status}</em>
+              </article>
+            ))}
+          </section>
+        </div>
+      </section>
+    </main>
+  );
+}
+
+function PanelTitle(props: { title: string; action?: string }) {
+  return (
+    <div className="panel-title">
+      <h2>{props.title}</h2>
+      {props.action && <button>{props.action}</button>}
+    </div>
+  );
+}
+
+createRoot(document.getElementById("root")!).render(<App />);

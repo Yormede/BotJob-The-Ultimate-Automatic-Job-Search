@@ -1,0 +1,17 @@
+node_modules/
+dist/
+tmp/
+.env
+.env.*
+!.env.example
+
+# Local agent/memory files
+AGENT_CONTEXT.md
+diary/
+2026-*.md
+
+# Private project dossier and personal research notes
+docs/ccp2/
+docs/cheapchip-*.md
+docs/recherche-aides-*.md
+docs/cv-ldm-directives.md

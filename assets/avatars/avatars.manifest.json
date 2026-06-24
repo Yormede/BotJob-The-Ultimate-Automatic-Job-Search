@@ -1,0 +1,461 @@
+{
+  "generatedAt": "2026-06-11T10:25:10.904Z",
+  "count": 30,
+  "formats": {
+    "image": "webp 256x256",
+    "thumb": "webp 96x96"
+  },
+  "importInbox": "assets/avatars/source/inbox",
+  "avatars": [
+    {
+      "id": "anime-shadow-01",
+      "label": "Nocturne Strategist",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-shadow-01.svg",
+      "image": "assets/avatars/optimized/anime-shadow-01.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-shadow-01.webp",
+      "sizes": {
+        "sourceBytes": 2264,
+        "imageBytes": 4256,
+        "thumbBytes": 1400
+      }
+    },
+    {
+      "id": "anime-neon-02",
+      "label": "Neon Ronin",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-neon-02.svg",
+      "image": "assets/avatars/optimized/anime-neon-02.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-neon-02.webp",
+      "sizes": {
+        "sourceBytes": 2255,
+        "imageBytes": 4586,
+        "thumbBytes": 1492
+      }
+    },
+    {
+      "id": "anime-violet-03",
+      "label": "Violet Ace",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-violet-03.svg",
+      "image": "assets/avatars/optimized/anime-violet-03.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-violet-03.webp",
+      "sizes": {
+        "sourceBytes": 2255,
+        "imageBytes": 4538,
+        "thumbBytes": 1494
+      }
+    },
+    {
+      "id": "anime-crimson-04",
+      "label": "Crimson Pilot",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-crimson-04.svg",
+      "image": "assets/avatars/optimized/anime-crimson-04.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-crimson-04.webp",
+      "sizes": {
+        "sourceBytes": 2258,
+        "imageBytes": 4486,
+        "thumbBytes": 1468
+      }
+    },
+    {
+      "id": "anime-onyx-05",
+      "label": "Onyx Scholar",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-onyx-05.svg",
+      "image": "assets/avatars/optimized/anime-onyx-05.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-onyx-05.webp",
+      "sizes": {
+        "sourceBytes": 2257,
+        "imageBytes": 3368,
+        "thumbBytes": 1094
+      }
+    },
+    {
+      "id": "anime-cyber-06",
+      "label": "Cyber Mystic",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-cyber-06.svg",
+      "image": "assets/avatars/optimized/anime-cyber-06.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-cyber-06.webp",
+      "sizes": {
+        "sourceBytes": 2257,
+        "imageBytes": 5070,
+        "thumbBytes": 1668
+      }
+    },
+    {
+      "id": "anime-amber-07",
+      "label": "Amber Blade",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-amber-07.svg",
+      "image": "assets/avatars/optimized/anime-amber-07.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-amber-07.webp",
+      "sizes": {
+        "sourceBytes": 2256,
+        "imageBytes": 4950,
+        "thumbBytes": 1644
+      }
+    },
+    {
+      "id": "anime-silver-08",
+      "label": "Silver Shade",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-silver-08.svg",
+      "image": "assets/avatars/optimized/anime-silver-08.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-silver-08.webp",
+      "sizes": {
+        "sourceBytes": 2257,
+        "imageBytes": 3754,
+        "thumbBytes": 1268
+      }
+    },
+    {
+      "id": "anime-emerald-09",
+      "label": "Emerald Cipher",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-emerald-09.svg",
+      "image": "assets/avatars/optimized/anime-emerald-09.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-emerald-09.webp",
+      "sizes": {
+        "sourceBytes": 2259,
+        "imageBytes": 4540,
+        "thumbBytes": 1480
+      }
+    },
+    {
+      "id": "anime-rose-10",
+      "label": "Rose Hacker",
+      "category": "anime",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/anime-rose-10.svg",
+      "image": "assets/avatars/optimized/anime-rose-10.webp",
+      "thumb": "assets/avatars/optimized/thumbs/anime-rose-10.webp",
+      "sizes": {
+        "sourceBytes": 2256,
+        "imageBytes": 4446,
+        "thumbBytes": 1532
+      }
+    },
+    {
+      "id": "cartoon-spark-01",
+      "label": "Spark Builder",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-spark-01.svg",
+      "image": "assets/avatars/optimized/cartoon-spark-01.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-spark-01.webp",
+      "sizes": {
+        "sourceBytes": 2260,
+        "imageBytes": 5250,
+        "thumbBytes": 1782
+      }
+    },
+    {
+      "id": "cartoon-mint-02",
+      "label": "Mint Maker",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-mint-02.svg",
+      "image": "assets/avatars/optimized/cartoon-mint-02.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-mint-02.webp",
+      "sizes": {
+        "sourceBytes": 2257,
+        "imageBytes": 4616,
+        "thumbBytes": 1530
+      }
+    },
+    {
+      "id": "cartoon-sky-03",
+      "label": "Sky Fixer",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-sky-03.svg",
+      "image": "assets/avatars/optimized/cartoon-sky-03.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-sky-03.webp",
+      "sizes": {
+        "sourceBytes": 2256,
+        "imageBytes": 4576,
+        "thumbBytes": 1526
+      }
+    },
+    {
+      "id": "cartoon-plum-04",
+      "label": "Plum Captain",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-plum-04.svg",
+      "image": "assets/avatars/optimized/cartoon-plum-04.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-plum-04.webp",
+      "sizes": {
+        "sourceBytes": 2259,
+        "imageBytes": 4572,
+        "thumbBytes": 1502
+      }
+    },
+    {
+      "id": "cartoon-coral-05",
+      "label": "Coral Scout",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-coral-05.svg",
+      "image": "assets/avatars/optimized/cartoon-coral-05.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-coral-05.webp",
+      "sizes": {
+        "sourceBytes": 2258,
+        "imageBytes": 4510,
+        "thumbBytes": 1518
+      }
+    },
+    {
+      "id": "cartoon-lime-06",
+      "label": "Lime Runner",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-lime-06.svg",
+      "image": "assets/avatars/optimized/cartoon-lime-06.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-lime-06.webp",
+      "sizes": {
+        "sourceBytes": 2258,
+        "imageBytes": 4700,
+        "thumbBytes": 1598
+      }
+    },
+    {
+      "id": "cartoon-berry-07",
+      "label": "Berry Coder",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-berry-07.svg",
+      "image": "assets/avatars/optimized/cartoon-berry-07.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-berry-07.webp",
+      "sizes": {
+        "sourceBytes": 2258,
+        "imageBytes": 4244,
+        "thumbBytes": 1416
+      }
+    },
+    {
+      "id": "cartoon-cobalt-08",
+      "label": "Cobalt Guide",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-cobalt-08.svg",
+      "image": "assets/avatars/optimized/cartoon-cobalt-08.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-cobalt-08.webp",
+      "sizes": {
+        "sourceBytes": 2259,
+        "imageBytes": 4878,
+        "thumbBytes": 1622
+      }
+    },
+    {
+      "id": "cartoon-sand-09",
+      "label": "Sand Analyst",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-sand-09.svg",
+      "image": "assets/avatars/optimized/cartoon-sand-09.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-sand-09.webp",
+      "sizes": {
+        "sourceBytes": 2259,
+        "imageBytes": 4646,
+        "thumbBytes": 1538
+      }
+    },
+    {
+      "id": "cartoon-ice-10",
+      "label": "Ice Operator",
+      "category": "cartoon",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/cartoon-ice-10.svg",
+      "image": "assets/avatars/optimized/cartoon-ice-10.webp",
+      "thumb": "assets/avatars/optimized/thumbs/cartoon-ice-10.webp",
+      "sizes": {
+        "sourceBytes": 2259,
+        "imageBytes": 4322,
+        "thumbBytes": 1484
+      }
+    },
+    {
+      "id": "pro-slate-01",
+      "label": "Slate Advisor",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-slate-01.svg",
+      "image": "assets/avatars/optimized/pro-slate-01.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-slate-01.webp",
+      "sizes": {
+        "sourceBytes": 2265,
+        "imageBytes": 4500,
+        "thumbBytes": 1436
+      }
+    },
+    {
+      "id": "pro-teal-02",
+      "label": "Teal Consultant",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-teal-02.svg",
+      "image": "assets/avatars/optimized/pro-teal-02.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-teal-02.webp",
+      "sizes": {
+        "sourceBytes": 2267,
+        "imageBytes": 4118,
+        "thumbBytes": 1408
+      }
+    },
+    {
+      "id": "pro-indigo-03",
+      "label": "Indigo Lead",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-indigo-03.svg",
+      "image": "assets/avatars/optimized/pro-indigo-03.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-indigo-03.webp",
+      "sizes": {
+        "sourceBytes": 2263,
+        "imageBytes": 4046,
+        "thumbBytes": 1386
+      }
+    },
+    {
+      "id": "pro-graphite-04",
+      "label": "Graphite Manager",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-graphite-04.svg",
+      "image": "assets/avatars/optimized/pro-graphite-04.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-graphite-04.webp",
+      "sizes": {
+        "sourceBytes": 2268,
+        "imageBytes": 3868,
+        "thumbBytes": 1304
+      }
+    },
+    {
+      "id": "pro-green-05",
+      "label": "Green Strategist",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-green-05.svg",
+      "image": "assets/avatars/optimized/pro-green-05.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-green-05.webp",
+      "sizes": {
+        "sourceBytes": 2268,
+        "imageBytes": 4022,
+        "thumbBytes": 1326
+      }
+    },
+    {
+      "id": "pro-navy-06",
+      "label": "Navy Architect",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-navy-06.svg",
+      "image": "assets/avatars/optimized/pro-navy-06.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-navy-06.webp",
+      "sizes": {
+        "sourceBytes": 2266,
+        "imageBytes": 4524,
+        "thumbBytes": 1516
+      }
+    },
+    {
+      "id": "pro-burgundy-07",
+      "label": "Burgundy Founder",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-burgundy-07.svg",
+      "image": "assets/avatars/optimized/pro-burgundy-07.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-burgundy-07.webp",
+      "sizes": {
+        "sourceBytes": 2268,
+        "imageBytes": 4106,
+        "thumbBytes": 1378
+      }
+    },
+    {
+      "id": "pro-steel-08",
+      "label": "Steel Engineer",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-steel-08.svg",
+      "image": "assets/avatars/optimized/pro-steel-08.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-steel-08.webp",
+      "sizes": {
+        "sourceBytes": 2266,
+        "imageBytes": 3820,
+        "thumbBytes": 1270
+      }
+    },
+    {
+      "id": "pro-violet-09",
+      "label": "Violet Director",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-violet-09.svg",
+      "image": "assets/avatars/optimized/pro-violet-09.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-violet-09.webp",
+      "sizes": {
+        "sourceBytes": 2267,
+        "imageBytes": 4396,
+        "thumbBytes": 1462
+      }
+    },
+    {
+      "id": "pro-copper-10",
+      "label": "Copper Analyst",
+      "category": "professional",
+      "sourceType": "generated",
+      "license": "BotJob original generated SVG",
+      "source": "assets/avatars/source/generated/pro-copper-10.svg",
+      "image": "assets/avatars/optimized/pro-copper-10.webp",
+      "thumb": "assets/avatars/optimized/thumbs/pro-copper-10.webp",
+      "sizes": {
+        "sourceBytes": 2266,
+        "imageBytes": 4348,
+        "thumbBytes": 1464
+      }
+    }
+  ]
+}
