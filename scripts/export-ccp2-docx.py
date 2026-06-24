@@ -25,6 +25,13 @@ def strip_inline(text: str) -> str:
     return text.strip()
 
 
+def resolve_doc_image(path: str) -> Path:
+    image_path = Path(path)
+    if image_path.is_absolute():
+        return image_path
+    return (SOURCE.parent / image_path).resolve()
+
+
 def add_table_as_text(doc: Document, rows: list[list[str]]) -> None:
     if not rows:
         return
@@ -185,6 +192,19 @@ def export() -> None:
         if line.strip().startswith("|"):
             rows, i = parse_table(lines, i)
             add_table_as_text(doc, rows)
+            continue
+
+        image_match = re.fullmatch(r"!\[(.*?)\]\((.*?)\)", line.strip())
+        if image_match:
+            alt, image_ref = image_match.groups()
+            image_path = resolve_doc_image(image_ref)
+            if image_path.exists():
+                doc.add_picture(str(image_path), width=Inches(6.4))
+                if alt:
+                    doc.add_paragraph(strip_inline(alt))
+            else:
+                doc.add_paragraph(f"Image manquante : {image_ref}")
+            i += 1
             continue
 
         if line.startswith("# "):
