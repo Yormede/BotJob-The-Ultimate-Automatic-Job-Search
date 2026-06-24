@@ -16,6 +16,14 @@ Stack MVP:
 - Auth: session serveur + cookie `HttpOnly`
 - Tests: `bun test`
 
+## Current MVP status
+
+- PostgreSQL migration available for the 6 core MVP tables.
+- Backend implemented for auth, sessions, dashboard, applications, application events, job axes and AI profile.
+- Private data access is scoped by `user_id` in repositories.
+- Dashboard frontend includes a local assistant demo and CV HTML/CSS preview.
+- Latest validation: `bun test` = 11 pass / 0 fail, Vite production build OK.
+
 ## Installation
 
 ```powershell
