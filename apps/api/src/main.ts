@@ -93,6 +93,7 @@ const dynamicRoutes: Array<{
 
 const server = Bun.serve({
   port: Number(process.env.API_PORT ?? 3000),
+  idleTimeout: 30,
   async fetch(request) {
     try {
       if (request.method === "OPTIONS") return corsPreflight();
