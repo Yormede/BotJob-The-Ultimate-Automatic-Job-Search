@@ -610,8 +610,28 @@ button:active {
 
 .compact-form,
 .event-list,
+.document-options,
 .document-list {
   margin-top: 14px;
+}
+
+.document-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.document-options label {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  color: #b8c3d2;
+  font-size: 13px;
+}
+
+.document-options input {
+  width: auto;
 }
 
 .document-list {

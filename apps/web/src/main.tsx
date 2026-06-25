@@ -373,16 +373,17 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     await loadPrivateData();
   }
 
-  async function generateDocuments(application: Application) {
+  async function generateDocuments(application: Application, form: HTMLFormElement) {
+    const fields = new FormData(form);
     const data = await api<{ documents: GeneratedDocument[] }>(`/api/applications/${application.id}/generate`, {
       method: "POST",
       body: JSON.stringify({
-        includeCv: true,
-        includeCoverLetter: true,
-        includeApproachMessage: true,
+        includeCv: fields.has("includeCv"),
+        includeCoverLetter: fields.has("includeCoverLetter"),
+        includeApproachMessage: fields.has("includeApproachMessage"),
       }),
     });
-    setNotice(`${data.documents.length} documents generes.`);
+    setNotice(generationNotice(data.documents.length));
     await loadGeneratedDocuments(application.id);
   }
 
@@ -580,7 +581,15 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                 onSubmit={(form) => updateApplication(form, selectedApplication).catch((error) => setNotice(error.message))}
               />
               <ApplicationEventForm onSubmit={(form) => createApplicationEvent(form, selectedApplication).catch((error) => setNotice(error.message))} />
-              <button onClick={() => generateDocuments(selectedApplication).catch((error) => setNotice(error.message))}>Generer CV, lettre et message</button>
+              <form className="document-options" onSubmit={(event) => {
+                event.preventDefault();
+                generateDocuments(selectedApplication, event.currentTarget).catch((error) => setNotice(error.message));
+              }}>
+                <label><input name="includeCv" type="checkbox" defaultChecked /> CV</label>
+                <label><input name="includeCoverLetter" type="checkbox" defaultChecked /> Lettre</label>
+                <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
+                <button type="submit">Generer les documents</button>
+              </form>
               <div className="document-list">
                 {generatedDocuments.map((document) => (
                   <article key={document.id}>
@@ -804,6 +813,10 @@ function dateInputValue(value: string | null | undefined) {
 
 function slugify(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+function generationNotice(count: number) {
+  return `${count} document${count > 1 ? "s" : ""} genere${count > 1 ? "s" : ""}.`;
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
