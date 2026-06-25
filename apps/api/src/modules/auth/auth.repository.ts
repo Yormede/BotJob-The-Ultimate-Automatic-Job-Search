@@ -13,6 +13,8 @@ export type RegisterUserInput = {
   avatarId: string;
 };
 
+export type AuthCodePurpose = "email_verification" | "password_reset";
+
 export async function createUser(sql: SqlClient, input: RegisterUserInput) {
   const rows = await sql<SessionUser[]>`
     INSERT INTO users (
@@ -35,7 +37,7 @@ export async function createUser(sql: SqlClient, input: RegisterUserInput) {
       ${input.phoneCountryCode},
       ${input.phoneNumber},
       ${input.avatarId},
-      'active'
+      'pending_email_verification'
     )
     RETURNING
       id,
@@ -49,15 +51,37 @@ export async function createUser(sql: SqlClient, input: RegisterUserInput) {
   return rows[0];
 }
 
+export async function createAuthCode(
+  sql: SqlClient,
+  userId: string,
+  purpose: AuthCodePurpose,
+  codeHash: string,
+  expiresAt: Date,
+) {
+  await sql`
+    UPDATE auth_codes
+    SET consumed_at = now()
+    WHERE user_id = ${userId}
+      AND purpose = ${purpose}
+      AND consumed_at IS NULL
+  `;
+
+  await sql`
+    INSERT INTO auth_codes (user_id, purpose, code_hash, expires_at)
+    VALUES (${userId}, ${purpose}, ${codeHash}, ${expiresAt})
+  `;
+}
+
 export async function findUserForLogin(sql: SqlClient, login: string) {
-  const rows = await sql<Array<SessionUser & { passwordHash: string }>>`
+  const rows = await sql<Array<SessionUser & { passwordHash: string; status: string }>>`
     SELECT
       id,
       email,
       username,
       first_name AS "firstName",
       last_name AS "lastName",
-      password_hash AS "passwordHash"
+      password_hash AS "passwordHash",
+      status
     FROM users
     WHERE lower(email) = lower(${login})
        OR lower(username) = lower(${login})
@@ -65,6 +89,68 @@ export async function findUserForLogin(sql: SqlClient, login: string) {
   `;
 
   return rows[0] ?? null;
+}
+
+export async function findUserForVerification(sql: SqlClient, email: string) {
+  const rows = await sql<Array<SessionUser & { status: string }>>`
+    SELECT
+      id,
+      email,
+      username,
+      first_name AS "firstName",
+      last_name AS "lastName",
+      status
+    FROM users
+    WHERE lower(email) = lower(${email})
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function findActiveAuthCode(
+  sql: SqlClient,
+  userId: string,
+  purpose: AuthCodePurpose,
+) {
+  const rows = await sql<Array<{ id: string; codeHash: string }>>`
+    SELECT id, code_hash AS "codeHash"
+    FROM auth_codes
+    WHERE user_id = ${userId}
+      AND purpose = ${purpose}
+      AND consumed_at IS NULL
+      AND expires_at > now()
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  return rows[0] ?? null;
+}
+
+export async function consumeAuthCode(sql: SqlClient, codeId: string) {
+  await sql`
+    UPDATE auth_codes
+    SET consumed_at = now()
+    WHERE id = ${codeId}
+  `;
+}
+
+export async function activateUserEmail(sql: SqlClient, userId: string) {
+  const rows = await sql<SessionUser[]>`
+    UPDATE users
+    SET status = 'active',
+        email_verified_at = COALESCE(email_verified_at, now()),
+        updated_at = now()
+    WHERE id = ${userId}
+    RETURNING
+      id,
+      email,
+      username,
+      first_name AS "firstName",
+      last_name AS "lastName"
+  `;
+
+  return rows[0];
 }
 
 export async function createSession(

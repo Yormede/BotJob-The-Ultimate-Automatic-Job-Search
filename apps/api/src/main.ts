@@ -4,7 +4,9 @@ import {
   loginController,
   logoutController,
   registerController,
+  resendVerificationController,
   sessionController,
+  verifyEmailController,
 } from "./modules/auth/auth.routes";
 import {
   createApplicationController,
@@ -34,6 +36,8 @@ import {
 const exactRoutes = new Map<string, Handler>([
   ["POST /api/auth/register", wrapRequest(registerController)],
   ["POST /api/auth/login", wrapRequest(loginController)],
+  ["POST /api/auth/verify-email", wrapRequest(verifyEmailController)],
+  ["POST /api/auth/resend-verification", wrapRequest(resendVerificationController)],
   ["GET /api/auth/session", wrapRequest(sessionController)],
   ["POST /api/auth/logout", wrapRequest(logoutController)],
   ["GET /api/dashboard", dashboardController],

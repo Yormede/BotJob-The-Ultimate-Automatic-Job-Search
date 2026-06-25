@@ -249,6 +249,15 @@ button:active {
   color: #ffb4a8;
 }
 
+.dev-code {
+  border: 1px solid #1f8c80;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #6ee7d8;
+  background: rgba(31, 140, 128, 0.12);
+  font-size: 13px;
+}
+
 .dashboard {
   display: grid;
   grid-template-columns: 176px minmax(0, 1fr);

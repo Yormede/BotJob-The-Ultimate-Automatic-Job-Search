@@ -12,7 +12,9 @@ import {
   login,
   logout,
   register,
+  resendVerificationCode,
   SESSION_MAX_AGE_SECONDS,
+  verifyEmail,
 } from "./auth.service";
 
 export async function registerController(request: Request) {
@@ -26,11 +28,45 @@ export async function registerController(request: Request) {
       userAgent: request.headers.get("user-agent") ?? "",
     });
 
-    return json({ user: result.user }, 201, {
+    return json({ user: result.user, verificationCode: result.verificationCode }, 201);
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "inscription impossible");
+  } finally {
+    await sql.close();
+  }
+}
+
+export async function verifyEmailController(request: Request) {
+  const body = await readJson<Record<string, unknown>>(request);
+  if (!body) return badRequest("JSON invalide");
+
+  const sql = getSql();
+  try {
+    const result = await verifyEmail(sql, {
+      ...body,
+      userAgent: request.headers.get("user-agent") ?? "",
+    });
+
+    return json({ user: result.user }, 200, {
       "Set-Cookie": sessionCookie(result.token, SESSION_MAX_AGE_SECONDS),
     });
   } catch (error) {
-    return badRequest(error instanceof Error ? error.message : "inscription impossible");
+    return badRequest(error instanceof Error ? error.message : "verification impossible");
+  } finally {
+    await sql.close();
+  }
+}
+
+export async function resendVerificationController(request: Request) {
+  const body = await readJson<Record<string, unknown>>(request);
+  if (!body) return badRequest("JSON invalide");
+
+  const sql = getSql();
+  try {
+    const result = await resendVerificationCode(sql, body);
+    return json(result);
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "renvoi impossible");
   } finally {
     await sql.close();
   }

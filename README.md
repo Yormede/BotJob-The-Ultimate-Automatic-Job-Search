@@ -18,11 +18,12 @@ Stack MVP:
 
 ## Current MVP status
 
-- PostgreSQL migrations available for the core MVP tables and generated documents.
+- PostgreSQL migrations available for the core MVP tables, auth codes and generated documents.
 - Backend implemented for auth, sessions, dashboard, applications, application events, job axes, AI profile and local document generation.
+- Email verification by code is implemented; in development the code is returned by the API so the flow can be tested without an email provider.
 - Private data access is scoped by `user_id` in repositories.
 - Dashboard frontend includes a local assistant demo and CV HTML/CSS preview.
-- Latest validation: `bun test` = 11 pass / 0 fail, Vite production build OK.
+- Latest validation: `bun test` = 14 pass / 0 fail, Vite production build OK.
 
 ## Installation
 
@@ -72,6 +73,8 @@ bun test
 - `GET /api/health`
 - `POST /api/auth/register`
 - `POST /api/auth/login`
+- `POST /api/auth/verify-email`
+- `POST /api/auth/resend-verification`
 - `GET /api/auth/session`
 - `POST /api/auth/logout`
 - `GET /api/dashboard`
@@ -91,4 +94,4 @@ bun test
 - `GET /api/ai-profile`
 - `PUT /api/ai-profile`
 
-Skipped for now: email verification, persistent rate limiting, external AI provider and file/PDF storage.
+Skipped for now: external email delivery, persistent rate limiting, external AI provider and file/PDF storage.

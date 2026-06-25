@@ -1,15 +1,21 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomInt } from "node:crypto";
 import type { SessionUser } from "../../shared/http";
 import {
+  activateUserEmail,
+  consumeAuthCode,
+  createAuthCode,
   createSession,
   createUser,
+  findActiveAuthCode,
   findUserBySessionToken,
   findUserForLogin,
+  findUserForVerification,
   revokeSession,
   type SqlClient,
 } from "./auth.repository";
 
 const SESSION_DAYS = 14;
+const VERIFICATION_CODE_MINUTES = 20;
 export const SESSION_MAX_AGE_SECONDS = SESSION_DAYS * 24 * 60 * 60;
 
 export type AuthResult = {
@@ -17,8 +23,17 @@ export type AuthResult = {
   token: string;
 };
 
+export type RegisterResult = {
+  user: SessionUser;
+  verificationCode?: string;
+};
+
 export function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
+}
+
+export function hashAuthCode(code: string) {
+  return hashToken(code.trim());
 }
 
 function normalizeEmail(email: string) {
@@ -37,7 +52,15 @@ function newSessionToken() {
   return randomBytes(32).toString("base64url");
 }
 
-export async function register(sql: SqlClient, body: Record<string, unknown>): Promise<AuthResult> {
+function newVerificationCode() {
+  return String(randomInt(0, 1_000_000)).padStart(6, "0");
+}
+
+function exposeDevCode(code: string) {
+  return process.env.NODE_ENV === "production" ? undefined : code;
+}
+
+export async function register(sql: SqlClient, body: Record<string, unknown>): Promise<RegisterResult> {
   const email = normalizeEmail(requireText(body.email, "email"));
   const username = requireText(body.username, "username");
   const password = requireText(body.password, "mot de passe");
@@ -58,7 +81,16 @@ export async function register(sql: SqlClient, body: Record<string, unknown>): P
     avatarId: String(body.avatarId || "pro-slate-01"),
   });
 
-  return createUserSession(sql, user, String(body.userAgent || ""));
+  const verificationCode = newVerificationCode();
+  await createAuthCode(
+    sql,
+    user.id,
+    "email_verification",
+    hashAuthCode(verificationCode),
+    new Date(Date.now() + VERIFICATION_CODE_MINUTES * 60 * 1000),
+  );
+
+  return { user, verificationCode: exposeDevCode(verificationCode) };
 }
 
 export async function login(sql: SqlClient, body: Record<string, unknown>): Promise<AuthResult> {
@@ -70,8 +102,48 @@ export async function login(sql: SqlClient, body: Record<string, unknown>): Prom
     throw new Error("identifiants invalides");
   }
 
-  const { passwordHash: _passwordHash, ...safeUser } = user;
+  if (user.status !== "active") {
+    throw new Error("email non verifie");
+  }
+
+  const { passwordHash: _passwordHash, status: _status, ...safeUser } = user;
   return createUserSession(sql, safeUser, String(body.userAgent || ""));
+}
+
+export async function verifyEmail(sql: SqlClient, body: Record<string, unknown>): Promise<AuthResult> {
+  const email = normalizeEmail(requireText(body.email, "email"));
+  const code = requireText(body.code, "code");
+  const user = await findUserForVerification(sql, email);
+
+  if (!user) throw new Error("code invalide");
+  if (user.status === "active") return createUserSession(sql, user, String(body.userAgent || ""));
+
+  const authCode = await findActiveAuthCode(sql, user.id, "email_verification");
+  if (!authCode || authCode.codeHash !== hashAuthCode(code)) {
+    throw new Error("code invalide ou expire");
+  }
+
+  await consumeAuthCode(sql, authCode.id);
+  const activeUser = await activateUserEmail(sql, user.id);
+  return createUserSession(sql, activeUser, String(body.userAgent || ""));
+}
+
+export async function resendVerificationCode(sql: SqlClient, body: Record<string, unknown>) {
+  const email = normalizeEmail(requireText(body.email, "email"));
+  const user = await findUserForVerification(sql, email);
+  if (!user) throw new Error("compte introuvable");
+  if (user.status === "active") return { alreadyVerified: true, verificationCode: undefined };
+
+  const verificationCode = newVerificationCode();
+  await createAuthCode(
+    sql,
+    user.id,
+    "email_verification",
+    hashAuthCode(verificationCode),
+    new Date(Date.now() + VERIFICATION_CODE_MINUTES * 60 * 1000),
+  );
+
+  return { alreadyVerified: false, verificationCode: exposeDevCode(verificationCode) };
 }
 
 export async function getSessionUser(sql: SqlClient, token: string | undefined) {

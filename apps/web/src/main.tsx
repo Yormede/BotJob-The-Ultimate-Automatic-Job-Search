@@ -81,6 +81,8 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [route, setRoute] = useState(location.pathname);
   const [error, setError] = useState("");
+  const [pendingEmail, setPendingEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   useEffect(() => {
     api<{ user: User | null }>("/api/auth/session")
@@ -107,12 +109,42 @@ function App() {
         ? { login: fields.login, password: fields.password }
         : fields;
 
-    const data = await api<{ user: User }>(`/api/auth/${mode}`, {
+    const data = await api<{ user: User; verificationCode?: string }>(`/api/auth/${mode}`, {
       method: "POST",
       body: JSON.stringify(payload),
     });
+
+    if (mode === "register") {
+      setPendingEmail(String(fields.email || ""));
+      setVerificationCode(data.verificationCode || "");
+      go("/verify-email");
+      return;
+    }
+
     setUser(data.user);
     go("/dashboard");
+  }
+
+  async function submitVerification(form: HTMLFormElement) {
+    const fields = Object.fromEntries(new FormData(form));
+    const data = await api<{ user: User }>("/api/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ email: fields.email, code: fields.code }),
+    });
+    setUser(data.user);
+    setVerificationCode("");
+    go("/dashboard");
+  }
+
+  async function resendVerification() {
+    const email = pendingEmail.trim();
+    if (!email) throw new Error("email requis");
+    const data = await api<{ verificationCode?: string; alreadyVerified?: boolean }>("/api/auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    setVerificationCode(data.verificationCode || "");
+    setError(data.alreadyVerified ? "Email deja verifie, vous pouvez vous connecter." : "");
   }
 
   async function logout() {
@@ -134,6 +166,26 @@ function App() {
           error={error}
           mode="register"
           onSubmit={(form) => submitAuth(form, "register").catch((e) => setError(e.message))}
+        />
+      </AuthShell>
+    );
+  }
+
+  if (route === "/verify-email") {
+    return (
+      <AuthShell
+        mode="verify"
+        title="Verifiez votre email"
+        subtitle="Saisissez le code recu pour activer votre espace BotJob."
+        switchLabel="Retour a la connexion"
+        onSwitch={() => go("/login")}
+      >
+        <VerifyEmailForm
+          email={pendingEmail}
+          error={error}
+          verificationCode={verificationCode}
+          onResend={() => resendVerification().catch((e) => setError(e.message))}
+          onSubmit={(form) => submitVerification(form).catch((e) => setError(e.message))}
         />
       </AuthShell>
     );
@@ -161,7 +213,7 @@ function App() {
 }
 
 function AuthShell(props: {
-  mode: "login" | "register";
+  mode: "login" | "register" | "verify";
   title: string;
   subtitle: string;
   switchLabel: string;
@@ -197,6 +249,31 @@ function AuthShell(props: {
         <button className="link-button" onClick={props.onSwitch}>{props.switchLabel}</button>
       </section>
     </main>
+  );
+}
+
+function VerifyEmailForm(props: {
+  email: string;
+  error: string;
+  verificationCode: string;
+  onSubmit: (form: HTMLFormElement) => void;
+  onResend: () => void;
+}) {
+  return (
+    <form
+      className="auth-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        props.onSubmit(event.currentTarget);
+      }}
+    >
+      <Field name="email" type="email" placeholder="Email" defaultValue={props.email} />
+      <Field name="code" placeholder="Code a 6 chiffres" minLength={6} maxLength={6} />
+      {props.verificationCode && <p className="dev-code">Code de test : {props.verificationCode}</p>}
+      {props.error && <p className="error">{props.error}</p>}
+      <button type="submit">Verifier mon email</button>
+      <button className="provider-button" type="button" onClick={props.onResend}>Renvoyer le code</button>
+    </form>
   );
 }
 
