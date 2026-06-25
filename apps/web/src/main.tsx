@@ -41,6 +41,14 @@ type ApplicationEvent = {
   eventAt?: string | null;
   createdAt: string;
 };
+type GeneratedDocument = {
+  id: string;
+  kind: "cv" | "cover_letter" | "approach_message";
+  version: number;
+  title: string;
+  contentText: string;
+  generatedAt: string;
+};
 type JobAxis = {
   id: string;
   title: string;
@@ -255,6 +263,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   const [aiProfile, setAiProfile] = useState<AiProfile | null>(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [applicationEvents, setApplicationEvents] = useState<ApplicationEvent[]>([]);
+  const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -284,12 +293,17 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
 
   async function selectApplication(id: string) {
     setSelectedApplicationId(id);
-    await loadApplicationEvents(id);
+    await Promise.all([loadApplicationEvents(id), loadGeneratedDocuments(id)]);
   }
 
   async function loadApplicationEvents(id: string) {
     const data = await api<{ events: ApplicationEvent[] }>(`/api/applications/${id}/events`);
     setApplicationEvents(data.events);
+  }
+
+  async function loadGeneratedDocuments(id: string) {
+    const data = await api<{ documents: GeneratedDocument[] }>(`/api/applications/${id}/documents`);
+    setGeneratedDocuments(data.documents);
   }
 
   function askAssistant() {
@@ -318,7 +332,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     form.reset();
     setNotice("Candidature enregistree.");
     setSelectedApplicationId(data.application.id);
-    await loadApplicationEvents(data.application.id);
+    await Promise.all([loadApplicationEvents(data.application.id), loadGeneratedDocuments(data.application.id)]);
     await loadPrivateData();
     setView("applications");
   }
@@ -330,7 +344,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     });
     setNotice("Candidature mise a jour.");
     setSelectedApplicationId(data.application.id);
-    await loadApplicationEvents(data.application.id);
+    await Promise.all([loadApplicationEvents(data.application.id), loadGeneratedDocuments(data.application.id)]);
     await loadPrivateData();
   }
 
@@ -339,6 +353,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     setNotice("Candidature supprimee.");
     setSelectedApplicationId(null);
     setApplicationEvents([]);
+    setGeneratedDocuments([]);
     await loadPrivateData();
   }
 
@@ -356,6 +371,19 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     setNotice("Action ajoutee.");
     await loadApplicationEvents(application.id);
     await loadPrivateData();
+  }
+
+  async function generateDocuments(application: Application) {
+    const data = await api<{ documents: GeneratedDocument[] }>(`/api/applications/${application.id}/generate`, {
+      method: "POST",
+      body: JSON.stringify({
+        includeCv: true,
+        includeCoverLetter: true,
+        includeApproachMessage: true,
+      }),
+    });
+    setNotice(`${data.documents.length} documents generes.`);
+    await loadGeneratedDocuments(application.id);
   }
 
   async function createJobAxis(form: HTMLFormElement) {
@@ -537,6 +565,17 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                 onSubmit={(form) => updateApplication(form, selectedApplication).catch((error) => setNotice(error.message))}
               />
               <ApplicationEventForm onSubmit={(form) => createApplicationEvent(form, selectedApplication).catch((error) => setNotice(error.message))} />
+              <button onClick={() => generateDocuments(selectedApplication).catch((error) => setNotice(error.message))}>Generer CV, lettre et message</button>
+              <div className="document-list">
+                {generatedDocuments.map((document) => (
+                  <article key={document.id}>
+                    <strong>{document.title}</strong>
+                    <small>{document.kind} v{document.version}</small>
+                    <pre>{document.contentText}</pre>
+                  </article>
+                ))}
+                {!generatedDocuments.length && <p className="empty">Aucun document genere.</p>}
+              </div>
               <div className="event-list">
                 {applicationEvents.map((event) => <p key={event.id}>{event.label}</p>)}
                 {!applicationEvents.length && <p className="empty">Aucune action historisee.</p>}

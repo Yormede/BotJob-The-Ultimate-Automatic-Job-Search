@@ -609,8 +609,39 @@ button:active {
 }
 
 .compact-form,
-.event-list {
+.event-list,
+.document-list {
   margin-top: 14px;
+}
+
+.document-list {
+  display: grid;
+  gap: 10px;
+}
+
+.document-list article {
+  border: 1px solid #1f2f45;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0a111b;
+}
+
+.document-list strong,
+.document-list small {
+  display: block;
+}
+
+.document-list small {
+  color: #8b98aa;
+}
+
+.document-list pre {
+  max-height: 190px;
+  overflow: auto;
+  white-space: pre-wrap;
+  color: #dce8f8;
+  font: inherit;
+  font-size: 12px;
 }
 
 .event-list p {

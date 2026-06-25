@@ -18,8 +18,8 @@ Stack MVP:
 
 ## Current MVP status
 
-- PostgreSQL migration available for the 6 core MVP tables.
-- Backend implemented for auth, sessions, dashboard, applications, application events, job axes and AI profile.
+- PostgreSQL migrations available for the core MVP tables and generated documents.
+- Backend implemented for auth, sessions, dashboard, applications, application events, job axes, AI profile and local document generation.
 - Private data access is scoped by `user_id` in repositories.
 - Dashboard frontend includes a local assistant demo and CV HTML/CSS preview.
 - Latest validation: `bun test` = 11 pass / 0 fail, Vite production build OK.
@@ -40,6 +40,7 @@ bun run db:migrate
 ```
 
 La commande applique `database/migrations/001_botjob_core.sql`.
+Les migrations deja appliquees sont suivies dans `schema_migrations`.
 
 ## Developpement
 
@@ -81,6 +82,8 @@ bun test
 - `DELETE /api/applications/:id`
 - `GET /api/applications/:id/events`
 - `POST /api/applications/:id/events`
+- `GET /api/applications/:id/documents`
+- `POST /api/applications/:id/generate`
 - `GET /api/job-axes`
 - `POST /api/job-axes`
 - `PATCH /api/job-axes/:id`
@@ -88,4 +91,4 @@ bun test
 - `GET /api/ai-profile`
 - `PUT /api/ai-profile`
 
-Skipped for now: email verification, persistent rate limiting, AI document generation and file storage. Those need the next database migration before implementation.
+Skipped for now: email verification, persistent rate limiting, external AI provider and file/PDF storage.

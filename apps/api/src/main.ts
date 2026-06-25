@@ -26,6 +26,10 @@ import {
   upsertAiProfileController,
 } from "./modules/ai-profile/ai-profile.routes";
 import { dashboardController } from "./modules/dashboard/dashboard.routes";
+import {
+  generateDocumentsController,
+  listGeneratedDocumentsController,
+} from "./modules/generation/generation.routes";
 
 const exactRoutes = new Map<string, Handler>([
   ["POST /api/auth/register", wrapRequest(registerController)],
@@ -76,6 +80,18 @@ const dynamicRoutes: Array<{
     pattern: /^\/api\/applications\/([^/]+)\/events$/,
     params: ["id"],
     handler: createApplicationEventController,
+  },
+  {
+    method: "GET",
+    pattern: /^\/api\/applications\/([^/]+)\/documents$/,
+    params: ["id"],
+    handler: listGeneratedDocumentsController,
+  },
+  {
+    method: "POST",
+    pattern: /^\/api\/applications\/([^/]+)\/generate$/,
+    params: ["id"],
+    handler: generateDocumentsController,
   },
   {
     method: "PATCH",
