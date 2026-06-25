@@ -413,6 +413,12 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
             <button onClick={props.onLogout}>Deconnexion</button>
           </div>
         </header>
+        <nav className="mobile-nav" aria-label="Navigation mobile">
+          <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>Dashboard</button>
+          <button className={view === "create" ? "active" : ""} onClick={() => setView("create")}>Creer</button>
+          <button className={view === "applications" ? "active" : ""} onClick={() => setView("applications")}>Candidatures</button>
+          <button className={view === "settings" ? "active" : ""} onClick={() => setView("settings")}>Settings</button>
+        </nav>
         {notice && <p className="notice">{notice}</p>}
         {loading ? <p className="notice">Chargement...</p> : null}
 

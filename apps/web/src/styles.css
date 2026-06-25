@@ -285,6 +285,10 @@ button:active {
   background: #1768df;
 }
 
+.mobile-nav {
+  display: none;
+}
+
 .dashboard-main {
   padding: 24px 26px;
 }
@@ -644,6 +648,33 @@ button:active {
 
   .sidebar {
     display: none;
+  }
+
+  .mobile-nav {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    margin: 12px 0 14px;
+    padding: 6px;
+    border: 1px solid #142031;
+    border-radius: 8px;
+    background: #070c13;
+  }
+
+  .mobile-nav button {
+    min-width: 0;
+    padding: 9px 5px;
+    color: #9aa7b8;
+    background: transparent;
+    font-size: 11px;
+  }
+
+  .mobile-nav button.active {
+    color: white;
+    background: #1768df;
   }
 
   .dashboard-main {
