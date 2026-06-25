@@ -635,6 +635,21 @@ button:active {
   color: #8b98aa;
 }
 
+.document-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.document-actions button {
+  padding: 8px 10px;
+  color: #d7e4f5;
+  background: #0d1724;
+  border: 1px solid #203047;
+  font-size: 12px;
+}
+
 .document-list pre {
   max-height: 190px;
   overflow: auto;

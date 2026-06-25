@@ -386,6 +386,21 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     await loadGeneratedDocuments(application.id);
   }
 
+  async function copyDocument(generatedDocument: GeneratedDocument) {
+    await navigator.clipboard.writeText(generatedDocument.contentText);
+    setNotice("Document copie.");
+  }
+
+  function downloadDocument(generatedDocument: GeneratedDocument) {
+    const link = document.createElement("a");
+    const file = new Blob([generatedDocument.contentText], { type: "text/plain;charset=utf-8" });
+    link.href = URL.createObjectURL(file);
+    link.download = `${slugify(generatedDocument.title)}-v${generatedDocument.version}.txt`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setNotice("Telechargement prepare.");
+  }
+
   async function createJobAxis(form: HTMLFormElement) {
     const fields = Object.fromEntries(new FormData(form));
     await api("/api/job-axes", {
@@ -571,6 +586,10 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                   <article key={document.id}>
                     <strong>{document.title}</strong>
                     <small>{document.kind} v{document.version}</small>
+                    <div className="document-actions">
+                      <button onClick={() => copyDocument(document).catch((error) => setNotice(error.message))}>Copier</button>
+                      <button onClick={() => downloadDocument(document)}>Telecharger .txt</button>
+                    </div>
                     <pre>{document.contentText}</pre>
                   </article>
                 ))}
@@ -781,6 +800,10 @@ function applicationPayload(form: HTMLFormElement) {
 
 function dateInputValue(value: string | null | undefined) {
   return value ? value.slice(0, 10) : "";
+}
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
