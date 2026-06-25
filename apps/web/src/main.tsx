@@ -75,6 +75,22 @@ type AiProfile = {
   lifeTrace: unknown[];
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Brouillon",
+  sent: "Envoyee",
+  follow_up: "Relance",
+  interview: "Entretien",
+  accepted: "Acceptee",
+  rejected: "Refusee",
+  archived: "Archivee",
+};
+
+const DOCUMENT_LABELS: Record<GeneratedDocument["kind"], string> = {
+  cv: "CV",
+  cover_letter: "Lettre",
+  approach_message: "Message",
+};
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -202,7 +218,7 @@ function App() {
     );
   }
 
-  if (!user || route === "/login" || route === "/") {
+  if (!user) {
     return (
       <AuthShell
         mode="login"
@@ -353,6 +369,8 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [applicationEvents, setApplicationEvents] = useState<ApplicationEvent[]>([]);
   const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
+  const [applicationQuery, setApplicationQuery] = useState("");
+  const [applicationStatusFilter, setApplicationStatusFilter] = useState("all");
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -551,8 +569,37 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     setNotice("Template supprime.");
   }
 
+  const visibleApplications = applications.filter((application) => {
+    const query = applicationQuery.trim().toLowerCase();
+    const values = [
+      application.company,
+      application.jobTitle,
+      application.locationLabel ?? "",
+      application.contractType ?? "",
+      application.status,
+      application.nextAction ?? "",
+      application.lastAction ?? "",
+    ].map((value) => value.toLowerCase());
+    const matchesQuery = !query || values.some((value) => value.includes(query));
+    const matchesStatus = applicationStatusFilter === "all" || application.status === applicationStatusFilter;
+    return matchesQuery && matchesStatus;
+  });
+  const hasApplicationFilters = applicationQuery.trim() !== "" || applicationStatusFilter !== "all";
   const selectedApplication =
-    applications.find((application) => application.id === selectedApplicationId) ?? applications[0] ?? null;
+    visibleApplications.find((application) => application.id === selectedApplicationId) ??
+    visibleApplications[0] ??
+    (hasApplicationFilters ? null : applications[0] ?? null);
+
+  useEffect(() => {
+    if (view !== "applications") return;
+    if (!selectedApplication?.id) {
+      setApplicationEvents([]);
+      setGeneratedDocuments([]);
+      return;
+    }
+    Promise.all([loadApplicationEvents(selectedApplication.id), loadGeneratedDocuments(selectedApplication.id)])
+      .catch((error) => setNotice(error.message));
+  }, [view, selectedApplication?.id]);
 
   return (
     <main className="dashboard">
@@ -659,7 +706,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                   <strong>{application.jobTitle}</strong>
                   <small>{application.company}</small>
                 </div>
-                <em>{application.status}</em>
+                <em>{statusLabel(application.status)}</em>
               </button>
             ))}
             {!applications.length && <p className="empty">Aucune candidature enregistree.</p>}
@@ -676,73 +723,122 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
         {view === "applications" && (
           <section className="applications-view">
             <section className="workspace-panel">
-            <PanelTitle title="Candidatures" />
-            <div className="application-list">
-              {applications.map((application) => (
-                <button className={`application-card ${application.id === selectedApplication?.id ? "active" : ""}`} key={application.id} onClick={() => selectApplication(application.id).catch((error) => setNotice(error.message))}>
-                  <div>
-                    <strong>{application.jobTitle}</strong>
-                    <small>{application.company} · {application.locationLabel || "Lieu non precise"}</small>
-                  </div>
-                  <em>{application.status}</em>
-                  <p>{application.nextAction || application.lastAction || "Aucune action enregistree."}</p>
-                </button>
-              ))}
-              {!applications.length && <p className="empty">Creez votre premiere candidature depuis l'onglet Creer.</p>}
-            </div>
-            </section>
-          {selectedApplication && (
-            <section className="workspace-panel">
-              <PanelTitle title="Detail candidature" />
-              <ApplicationForm
-                application={selectedApplication}
-                jobAxes={jobAxes}
-                submitLabel="Mettre a jour"
-                onSubmit={(form) => updateApplication(form, selectedApplication).catch((error) => setNotice(error.message))}
-              />
-              <ApplicationEventForm onSubmit={(form) => createApplicationEvent(form, selectedApplication).catch((error) => setNotice(error.message))} />
-              <form className="document-options" onSubmit={(event) => {
-                event.preventDefault();
-                generateDocuments(selectedApplication, event.currentTarget).catch((error) => setNotice(error.message));
-              }}>
-                <label><input name="includeCv" type="checkbox" defaultChecked /> CV</label>
-                <select name="cvTemplateId" aria-label="Template CV">
-                  <option value="">Template CV par defaut</option>
-                  {templates.filter((template) => template.kind === "cv").map((template) => (
-                    <option key={template.id} value={template.id}>{template.name}</option>
+              <PanelTitle title="Candidatures" action={`${visibleApplications.length}/${applications.length}`} />
+              <div className="applications-toolbar">
+                <input
+                  aria-label="Rechercher une candidature"
+                  placeholder="Rechercher entreprise, poste, lieu..."
+                  value={applicationQuery}
+                  onChange={(event) => setApplicationQuery(event.target.value)}
+                />
+                <select
+                  aria-label="Filtrer par statut"
+                  value={applicationStatusFilter}
+                  onChange={(event) => setApplicationStatusFilter(event.target.value)}
+                >
+                  <option value="all">Tous les statuts</option>
+                  {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>{label}</option>
                   ))}
                 </select>
-                <label><input name="includeCoverLetter" type="checkbox" defaultChecked /> Lettre</label>
-                <select name="coverLetterTemplateId" aria-label="Template lettre">
-                  <option value="">Template lettre par defaut</option>
-                  {templates.filter((template) => template.kind === "cover_letter").map((template) => (
-                    <option key={template.id} value={template.id}>{template.name}</option>
-                  ))}
-                </select>
-                <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
-                <button type="submit">Generer les documents</button>
-              </form>
-              <div className="document-list">
-                {generatedDocuments.map((document) => (
-                  <article key={document.id}>
-                    <strong>{document.title}</strong>
-                    <small>{document.kind} v{document.version}</small>
-                    <div className="document-actions">
-                      <button onClick={() => copyDocument(document).catch((error) => setNotice(error.message))}>Copier</button>
-                      <button onClick={() => downloadDocument(document)}>Telecharger .txt</button>
+              </div>
+              <div className="application-list">
+                {visibleApplications.map((application) => (
+                  <button className={`application-card ${application.id === selectedApplication?.id ? "active" : ""}`} key={application.id} onClick={() => selectApplication(application.id).catch((error) => setNotice(error.message))}>
+                    <div className="application-card-main">
+                      <span className="doc-icon"></span>
+                      <div>
+                        <strong>{application.jobTitle}</strong>
+                        <small>{application.company} - {application.locationLabel || "Lieu non precise"}</small>
+                      </div>
                     </div>
-                    <pre>{document.contentText}</pre>
-                  </article>
+                    <span className={`status-pill status-${application.status}`}>{statusLabel(application.status)}</span>
+                    <p>{application.nextAction || application.lastAction || "Aucune action enregistree."}</p>
+                  </button>
                 ))}
-                {!generatedDocuments.length && <p className="empty">Aucun document genere.</p>}
+                {!applications.length && <p className="empty">Creez votre premiere candidature depuis l'onglet Creer.</p>}
+                {applications.length > 0 && !visibleApplications.length && <p className="empty">Aucune candidature ne correspond aux filtres.</p>}
               </div>
-              <div className="event-list">
-                {applicationEvents.map((event) => <p key={event.id}>{event.label}</p>)}
-                {!applicationEvents.length && <p className="empty">Aucune action historisee.</p>}
-              </div>
-              <button className="danger-button" onClick={() => deleteApplication(selectedApplication).catch((error) => setNotice(error.message))}>Supprimer la candidature</button>
             </section>
-          )}
+            {selectedApplication && (
+              <section className="workspace-panel application-detail">
+                <div className="application-detail-hero">
+                  <div>
+                    <p className="eyebrow">Detail candidature</p>
+                    <h2>{selectedApplication.company}</h2>
+                    <p>{selectedApplication.jobTitle}</p>
+                    <div className="detail-meta">
+                      <span>{selectedApplication.locationLabel || "Lieu non precise"}</span>
+                      <span>{selectedApplication.contractType || "Contrat non precise"}</span>
+                      <span>{selectedApplication.appliedAt ? formatDate(selectedApplication.appliedAt) : "Non envoyee"}</span>
+                    </div>
+                  </div>
+                  <span className={`status-pill status-${selectedApplication.status}`}>{statusLabel(selectedApplication.status)}</span>
+                </div>
+                <ApplicationForm
+                  key={selectedApplication.id}
+                  application={selectedApplication}
+                  jobAxes={jobAxes}
+                  submitLabel="Mettre a jour"
+                  onSubmit={(form) => updateApplication(form, selectedApplication).catch((error) => setNotice(error.message))}
+                />
+                <div className="detail-columns">
+                  <section>
+                    <PanelTitle title="Documents generes" />
+                    <form className="document-options" onSubmit={(event) => {
+                      event.preventDefault();
+                      generateDocuments(selectedApplication, event.currentTarget).catch((error) => setNotice(error.message));
+                    }}>
+                      <label><input name="includeCv" type="checkbox" defaultChecked /> CV</label>
+                      <select name="cvTemplateId" aria-label="Template CV">
+                        <option value="">Template CV par defaut</option>
+                        {templates.filter((template) => template.kind === "cv").map((template) => (
+                          <option key={template.id} value={template.id}>{template.name}</option>
+                        ))}
+                      </select>
+                      <label><input name="includeCoverLetter" type="checkbox" defaultChecked /> Lettre</label>
+                      <select name="coverLetterTemplateId" aria-label="Template lettre">
+                        <option value="">Template lettre par defaut</option>
+                        {templates.filter((template) => template.kind === "cover_letter").map((template) => (
+                          <option key={template.id} value={template.id}>{template.name}</option>
+                        ))}
+                      </select>
+                      <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
+                      <button type="submit">Generer</button>
+                    </form>
+                    <div className="document-list">
+                      {generatedDocuments.map((document) => (
+                        <article key={document.id}>
+                          <strong>{document.title}</strong>
+                          <small>{DOCUMENT_LABELS[document.kind]} v{document.version} - {formatDate(document.generatedAt)}</small>
+                          <div className="document-actions">
+                            <button onClick={() => copyDocument(document).catch((error) => setNotice(error.message))}>Copier</button>
+                            <button onClick={() => downloadDocument(document)}>Telecharger .txt</button>
+                          </div>
+                          <pre>{document.contentText}</pre>
+                        </article>
+                      ))}
+                      {!generatedDocuments.length && <p className="empty">Aucun document genere.</p>}
+                    </div>
+                  </section>
+                  <aside>
+                    <PanelTitle title="Actions" />
+                    <ApplicationEventForm onSubmit={(form) => createApplicationEvent(form, selectedApplication).catch((error) => setNotice(error.message))} />
+                    <div className="event-list">
+                      {applicationEvents.map((event) => (
+                        <p key={event.id}>
+                          <span>{statusLabel(event.eventType)}</span>
+                          {event.label}
+                          <small>{formatDate(event.createdAt)}</small>
+                        </p>
+                      ))}
+                      {!applicationEvents.length && <p className="empty">Aucune action historisee.</p>}
+                    </div>
+                    <button className="danger-button" onClick={() => deleteApplication(selectedApplication).catch((error) => setNotice(error.message))}>Supprimer la candidature</button>
+                  </aside>
+                </div>
+              </section>
+            )}
           </section>
         )}
 
@@ -1021,6 +1117,14 @@ function applicationPayload(form: HTMLFormElement) {
 
 function dateInputValue(value: string | null | undefined) {
   return value ? value.slice(0, 10) : "";
+}
+
+function statusLabel(status: string) {
+  return STATUS_LABELS[status] ?? status.replace(/_/g, " ");
+}
+
+function formatDate(value: string | null | undefined) {
+  return value ? new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", year: "numeric" }).format(new Date(value)) : "";
 }
 
 function slugify(value: string) {
