@@ -343,7 +343,7 @@ function Field(props: React.InputHTMLAttributes<HTMLInputElement> & { name: stri
 }
 
 function Dashboard(props: { user: User; onLogout: () => void }) {
-  const [view, setView] = useState<"dashboard" | "create" | "applications" | "settings">("dashboard");
+  const [view, setView] = useState<"dashboard" | "create" | "applications" | "studio" | "settings">("dashboard");
   const [assistantPrompt, setAssistantPrompt] = useState("");
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
@@ -562,6 +562,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>Dashboard</button>
           <button className={view === "create" ? "active" : ""} onClick={() => setView("create")}>Creer</button>
           <button className={view === "applications" ? "active" : ""} onClick={() => setView("applications")}>Candidatures</button>
+          <button className={view === "studio" ? "active" : ""} onClick={() => setView("studio")}>Studio IA</button>
           <button className={view === "settings" ? "active" : ""} onClick={() => setView("settings")}>Settings</button>
         </nav>
         <p className="trust-note">L'assistant gere ce qui est autorise, jamais vos donnees sensibles.</p>
@@ -579,6 +580,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           <button className={view === "dashboard" ? "active" : ""} onClick={() => setView("dashboard")}>Dashboard</button>
           <button className={view === "create" ? "active" : ""} onClick={() => setView("create")}>Creer</button>
           <button className={view === "applications" ? "active" : ""} onClick={() => setView("applications")}>Candidatures</button>
+          <button className={view === "studio" ? "active" : ""} onClick={() => setView("studio")}>Studio</button>
           <button className={view === "settings" ? "active" : ""} onClick={() => setView("settings")}>Settings</button>
         </nav>
         {notice && <p className="notice">{notice}</p>}
@@ -744,30 +746,63 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           </section>
         )}
 
+        {view === "studio" && (
+          <section className="studio-view">
+            <section className="studio-hero">
+              <div>
+                <p className="eyebrow">Studio IA</p>
+                <h2>Profil, axes et templates</h2>
+                <p>Centralisez les donnees qui guident les generations : votre profil maitre, vos cibles de recherche et les modeles de documents.</p>
+              </div>
+              <div className="studio-metrics">
+                <span>{jobAxes.filter((axis) => axis.isActive).length}<small>axes actifs</small></span>
+                <span>{templates.length}<small>templates</small></span>
+              </div>
+            </section>
+            <section className="settings-grid studio-grid">
+              <section className="workspace-panel">
+                <PanelTitle title="Axes de recherche" />
+                <JobAxisForm onSubmit={(form) => createJobAxis(form).catch((error) => setNotice(error.message))} />
+              </section>
+              <section className="workspace-panel">
+                <PanelTitle title="Profil IA" />
+                <AiProfileForm profile={aiProfile} onSubmit={(form) => saveAiProfile(form).catch((error) => setNotice(error.message))} />
+              </section>
+              <section className="workspace-panel">
+                <PanelTitle title="Templates" />
+                <TemplateForm onSubmit={(form) => createTemplate(form).catch((error) => setNotice(error.message))} />
+                <div className="template-list">
+                  {templates.map((template) => (
+                    <article key={template.id}>
+                      <div>
+                        <strong>{template.name}</strong>
+                        <small>{template.kind === "cv" ? "CV" : "Lettre"}{template.isDefault ? " - defaut" : ""}</small>
+                      </div>
+                      <button type="button" onClick={() => deleteTemplate(template).catch((error) => setNotice(error.message))}>Supprimer</button>
+                    </article>
+                  ))}
+                  {!templates.length && <p className="empty">Aucun template enregistre.</p>}
+                </div>
+              </section>
+            </section>
+          </section>
+        )}
+
         {view === "settings" && (
           <section className="settings-grid">
             <section className="workspace-panel">
-              <PanelTitle title="Axes de recherche" />
-              <JobAxisForm onSubmit={(form) => createJobAxis(form).catch((error) => setNotice(error.message))} />
+              <PanelTitle title="Compte" />
+              <div className="settings-summary">
+                <p><strong>{props.user.firstName} {props.user.lastName}</strong></p>
+                <p>{props.user.email}</p>
+                <p>Session serveur active avec cookie HttpOnly.</p>
+              </div>
             </section>
             <section className="workspace-panel">
-              <PanelTitle title="Profil IA" />
-              <AiProfileForm profile={aiProfile} onSubmit={(form) => saveAiProfile(form).catch((error) => setNotice(error.message))} />
-            </section>
-            <section className="workspace-panel">
-              <PanelTitle title="Templates" />
-              <TemplateForm onSubmit={(form) => createTemplate(form).catch((error) => setNotice(error.message))} />
-              <div className="template-list">
-                {templates.map((template) => (
-                  <article key={template.id}>
-                    <div>
-                      <strong>{template.name}</strong>
-                      <small>{template.kind === "cv" ? "CV" : "Lettre"}{template.isDefault ? " - defaut" : ""}</small>
-                    </div>
-                    <button type="button" onClick={() => deleteTemplate(template).catch((error) => setNotice(error.message))}>Supprimer</button>
-                  </article>
-                ))}
-                {!templates.length && <p className="empty">Aucun template enregistre.</p>}
+              <PanelTitle title="Securite" />
+              <div className="settings-summary">
+                <p>Email verifie par code en V1.</p>
+                <p>Les donnees privees restent filtrees par utilisateur cote API.</p>
               </div>
             </section>
           </section>
