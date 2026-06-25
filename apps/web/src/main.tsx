@@ -646,9 +646,9 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
               ))}
             </div>
             <div className="quick-actions">
-              <button onClick={() => setAssistantPrompt("Cree un CV pour une offre React TypeScript")}>Creer une candidature</button>
-              <button onClick={() => setAssistantPrompt("Quelles candidatures dois-je relancer ?")}>Voir mes prochaines actions</button>
-              <button onClick={() => setAssistantPrompt("Optimise mon CV pour developpeur full stack")}>Optimiser mon CV</button>
+              <button onClick={() => setView("create")}>Creer une candidature</button>
+              <button onClick={() => setView("applications")}>Voir mes prochaines actions</button>
+              <button onClick={() => setView("studio")}>Optimiser mon profil</button>
             </div>
             <label className="assistant-input">
               <input
@@ -664,7 +664,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           </section>
 
           <section className="stats-panel">
-            <PanelTitle title="Candidatures ce mois" action="Configurer" />
+            <PanelTitle title="Candidatures ce mois" action="Configurer" onAction={() => setView("studio")} />
             <div className="stat-grid">
               {[
                 [dashboard?.stats.total ?? 0, "Candidatures"],
@@ -683,22 +683,22 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           <section className="creation-panel">
             <PanelTitle title="Creation rapide CV" />
             <div className="creation-actions">
-              <button>CV ATS 1 colonne</button>
-              <button>Lettre de motivation</button>
-              <button>Message d'approche</button>
+              <button onClick={() => setView("create")}>CV ATS 1 colonne</button>
+              <button onClick={() => setView("create")}>Lettre de motivation</button>
+              <button onClick={() => setView("create")}>Message d'approche</button>
             </div>
             <div className="cv-preview" dangerouslySetInnerHTML={{ __html: cvPreview }} />
           </section>
 
           <section className="axes-panel">
-            <PanelTitle title="Axes de recherche" action="Modifier" />
+            <PanelTitle title="Axes de recherche" action="Modifier" onAction={() => setView("studio")} />
             {jobAxes.length ? jobAxes.map((axis) => (
               <p key={axis.id}>{axis.title} - {axis.contractTypes.join(", ") || "Contrat libre"}</p>
             )) : <p>Aucun axe configure.</p>}
           </section>
 
           <section className="recent-panel">
-            <PanelTitle title="Candidatures recentes" action="Voir tout" />
+            <PanelTitle title="Candidatures recentes" action="Voir tout" onAction={() => setView("applications")} />
             {applications.slice(0, 5).map((application) => (
               <button className="job-row" key={application.id} onClick={() => selectApplication(application.id).catch((error) => setNotice(error.message))}>
                 <span className="doc-icon"></span>
@@ -714,9 +714,27 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
         </div>}
 
         {view === "create" && (
-          <section className="workspace-panel">
-            <PanelTitle title="Creation rapide" />
-            <ApplicationForm jobAxes={jobAxes} onSubmit={(form) => createApplication(form).catch((error) => setNotice(error.message))} />
+          <section className="create-workspace">
+            <section className="workspace-panel create-form-panel">
+              <PanelTitle title="Creer une candidature" action="Dashboard" onAction={() => setView("dashboard")} />
+              <ApplicationForm jobAxes={jobAxes} onSubmit={(form) => createApplication(form).catch((error) => setNotice(error.message))} />
+            </section>
+            <aside className="workspace-panel create-options-panel">
+              <PanelTitle title="Options de generation" />
+              <div className="create-option-list">
+                <p><strong>CV ATS 1 colonne</strong><span>Structure lisible, sobre et compatible ATS.</span></p>
+                <p><strong>Lettre de motivation</strong><span>Texte adapte a l'entreprise et a l'offre.</span></p>
+                <p><strong>Message d'approche</strong><span>Premier contact court pour recruteur ou manager.</span></p>
+              </div>
+              <button onClick={() => {
+                setAssistantPrompt("Aide-moi a analyser cette offre avant creation");
+                setView("dashboard");
+              }}>Preparer avec l'assistant</button>
+            </aside>
+            <section className="workspace-panel create-preview-panel">
+              <PanelTitle title="Apercu document" />
+              <div className="cv-preview" dangerouslySetInnerHTML={{ __html: cvPreview }} />
+            </section>
           </section>
         )}
 
@@ -1043,11 +1061,11 @@ function TemplateForm(props: { onSubmit: (form: HTMLFormElement) => void }) {
   );
 }
 
-function PanelTitle(props: { title: string; action?: string }) {
+function PanelTitle(props: { title: string; action?: string; onAction?: () => void }) {
   return (
     <div className="panel-title">
       <h2>{props.title}</h2>
-      {props.action && <button>{props.action}</button>}
+      {props.action && <button type="button" onClick={props.onAction}>{props.action}</button>}
     </div>
   );
 }
