@@ -1,6 +1,7 @@
 import { getSql } from "../../shared/db";
 import { badRequest, json, readJson, type HandlerContext } from "../../shared/http";
 import { AuthRequiredError, requireSessionUser, unauthorized } from "../../shared/session";
+import { userOwnsTemplate } from "../templates/templates.repository";
 import {
   createGeneratedDocument,
   createGenerationRun,
@@ -24,6 +25,13 @@ export async function generateDocumentsController({ request, params }: HandlerCo
     if (!application) return json({ error: "candidature introuvable" }, 404);
 
     const input = normalizeGenerationInput(body);
+    if (!(await userOwnsTemplate(sql, userId, input.cvTemplateId, "cv"))) {
+      return json({ error: "template CV introuvable" }, 404);
+    }
+    if (!(await userOwnsTemplate(sql, userId, input.coverLetterTemplateId, "cover_letter"))) {
+      return json({ error: "template lettre introuvable" }, 404);
+    }
+
     const run = await createGenerationRun(sql, userId, params.id, input);
     const documents = [];
 

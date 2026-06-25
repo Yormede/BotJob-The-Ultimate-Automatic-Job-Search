@@ -4,6 +4,8 @@ export type GenerationInput = {
   includeCv: boolean;
   includeCoverLetter: boolean;
   includeApproachMessage: boolean;
+  cvTemplateId: string | null;
+  coverLetterTemplateId: string | null;
 };
 
 export function normalizeGenerationInput(body: Record<string, unknown> | null): GenerationInput {
@@ -11,6 +13,8 @@ export function normalizeGenerationInput(body: Record<string, unknown> | null): 
     includeCv: optionalBoolean(body?.includeCv) ?? true,
     includeCoverLetter: optionalBoolean(body?.includeCoverLetter) ?? true,
     includeApproachMessage: optionalBoolean(body?.includeApproachMessage) ?? true,
+    cvTemplateId: optionalId(body?.cvTemplateId),
+    coverLetterTemplateId: optionalId(body?.coverLetterTemplateId),
   };
 
   if (!input.includeCv && !input.includeCoverLetter && !input.includeApproachMessage) {
@@ -25,8 +29,10 @@ export function buildGeneratedDocuments(
   input: GenerationInput,
 ): GeneratedDocumentInput[] {
   const docs: GeneratedDocumentInput[] = [];
-  if (input.includeCv) docs.push(renderCv(application));
-  if (input.includeCoverLetter) docs.push(renderCoverLetter(application));
+  if (input.includeCv) docs.push({ ...renderCv(application), templateId: input.cvTemplateId });
+  if (input.includeCoverLetter) {
+    docs.push({ ...renderCoverLetter(application), templateId: input.coverLetterTemplateId });
+  }
   if (input.includeApproachMessage) docs.push(renderApproachMessage(application));
   return docs;
 }
@@ -52,6 +58,7 @@ function renderCv(application: ApplicationForGeneration): GeneratedDocumentInput
 
   return {
     kind: "cv",
+    templateId: null,
     title,
     contentText: content,
     htmlContent: `<article><h1>${escapeHtml(application.userFirstName)} ${escapeHtml(application.userLastName)}</h1><h2>${escapeHtml(application.jobTitle)}</h2><p>${escapeHtml(shortOffer(application.fullOfferText))}</p></article>`,
@@ -63,6 +70,7 @@ function renderCv(application: ApplicationForGeneration): GeneratedDocumentInput
 function renderCoverLetter(application: ApplicationForGeneration): GeneratedDocumentInput {
   return {
     kind: "cover_letter",
+    templateId: null,
     title: `Lettre - ${application.company}`,
     contentText: [
       `Bonjour,`,
@@ -84,6 +92,7 @@ function renderCoverLetter(application: ApplicationForGeneration): GeneratedDocu
 function renderApproachMessage(application: ApplicationForGeneration): GeneratedDocumentInput {
   return {
     kind: "approach_message",
+    templateId: null,
     title: `Message - ${application.company}`,
     contentText: `Bonjour, je suis interesse par le poste de ${application.jobTitle} chez ${application.company}. J'aimerais echanger sur vos besoins et vous montrer comment mon profil fullstack peut aider votre equipe.`,
     htmlContent: null,
@@ -95,6 +104,12 @@ function renderApproachMessage(application: ApplicationForGeneration): Generated
 function optionalBoolean(value: unknown) {
   if (value == null) return undefined;
   if (typeof value !== "boolean") throw new Error("option de generation invalide");
+  return value;
+}
+
+function optionalId(value: unknown) {
+  if (value == null || value === "") return null;
+  if (typeof value !== "string") throw new Error("template invalide");
   return value;
 }
 

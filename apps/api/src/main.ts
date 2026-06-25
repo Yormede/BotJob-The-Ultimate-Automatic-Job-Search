@@ -27,6 +27,12 @@ import {
   getAiProfileController,
   upsertAiProfileController,
 } from "./modules/ai-profile/ai-profile.routes";
+import {
+  createTemplateController,
+  deleteTemplateController,
+  listTemplatesController,
+  updateTemplateController,
+} from "./modules/templates/templates.routes";
 import { dashboardController } from "./modules/dashboard/dashboard.routes";
 import {
   generateDocumentsController,
@@ -47,6 +53,8 @@ const exactRoutes = new Map<string, Handler>([
   ["POST /api/job-axes", createJobAxisController],
   ["GET /api/ai-profile", getAiProfileController],
   ["PUT /api/ai-profile", upsertAiProfileController],
+  ["GET /api/templates", listTemplatesController],
+  ["POST /api/templates", createTemplateController],
 ]);
 
 const dynamicRoutes: Array<{
@@ -108,6 +116,18 @@ const dynamicRoutes: Array<{
     pattern: /^\/api\/job-axes\/([^/]+)$/,
     params: ["id"],
     handler: deactivateJobAxisController,
+  },
+  {
+    method: "PATCH",
+    pattern: /^\/api\/templates\/([^/]+)$/,
+    params: ["id"],
+    handler: updateTemplateController,
+  },
+  {
+    method: "DELETE",
+    pattern: /^\/api\/templates\/([^/]+)$/,
+    params: ["id"],
+    handler: deleteTemplateController,
   },
 ];
 

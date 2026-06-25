@@ -11,6 +11,7 @@ export type ApplicationForGeneration = {
 
 export type GeneratedDocumentInput = {
   kind: "cv" | "cover_letter" | "approach_message";
+  templateId: string | null;
   title: string;
   contentText: string;
   htmlContent: string | null;
@@ -47,6 +48,7 @@ export async function listGeneratedDocuments(sql: SqlClient, userId: string, app
       d.id,
       d.application_id AS "applicationId",
       d.generation_run_id AS "generationRunId",
+      d.template_id AS "templateId",
       d.kind,
       d.version,
       d.title,
@@ -119,6 +121,7 @@ export async function createGeneratedDocument(
       user_id,
       application_id,
       generation_run_id,
+      template_id,
       kind,
       version,
       title,
@@ -131,6 +134,7 @@ export async function createGeneratedDocument(
       ${userId},
       ${applicationId},
       ${generationRunId},
+      ${input.templateId},
       ${input.kind},
       next_version.version,
       ${input.title},
@@ -143,6 +147,7 @@ export async function createGeneratedDocument(
       id,
       application_id AS "applicationId",
       generation_run_id AS "generationRunId",
+      template_id AS "templateId",
       kind,
       version,
       title,

@@ -31,4 +31,17 @@ describe("generation service", () => {
       }),
     ).toThrow("au moins un document est requis");
   });
+
+  test("keeps selected template ids on generated documents", () => {
+    const input = normalizeGenerationInput({
+      includeCv: true,
+      includeCoverLetter: true,
+      includeApproachMessage: false,
+      cvTemplateId: "tpl_cv",
+      coverLetterTemplateId: "tpl_letter",
+    });
+    const documents = buildGeneratedDocuments(application, input);
+
+    expect(documents.map((document) => document.templateId)).toEqual(["tpl_cv", "tpl_letter"]);
+  });
 });

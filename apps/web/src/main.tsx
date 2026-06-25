@@ -44,10 +44,21 @@ type ApplicationEvent = {
 type GeneratedDocument = {
   id: string;
   kind: "cv" | "cover_letter" | "approach_message";
+  templateId?: string | null;
   version: number;
   title: string;
   contentText: string;
   generatedAt: string;
+};
+type Template = {
+  id: string;
+  kind: "cv" | "cover_letter";
+  name: string;
+  description: string;
+  htmlContent?: string | null;
+  cssContent?: string | null;
+  isAtsOneColumn: boolean;
+  isDefault: boolean;
 };
 type JobAxis = {
   id: string;
@@ -337,6 +348,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   const [dashboard, setDashboard] = useState<DashboardData | null>(null);
   const [applications, setApplications] = useState<Application[]>([]);
   const [jobAxes, setJobAxes] = useState<JobAxis[]>([]);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [aiProfile, setAiProfile] = useState<AiProfile | null>(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [applicationEvents, setApplicationEvents] = useState<ApplicationEvent[]>([]);
@@ -356,16 +368,18 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   }, []);
 
   async function loadPrivateData() {
-    const [dashboardData, applicationsData, axesData, profileData] = await Promise.all([
+    const [dashboardData, applicationsData, axesData, profileData, templatesData] = await Promise.all([
       api<{ dashboard: DashboardData }>("/api/dashboard"),
       api<{ applications: Application[] }>("/api/applications"),
       api<{ jobAxes: JobAxis[] }>("/api/job-axes"),
       api<{ profile: AiProfile | null }>("/api/ai-profile"),
+      api<{ templates: Template[] }>("/api/templates"),
     ]);
     setDashboard(dashboardData.dashboard);
     setApplications(applicationsData.applications);
     setJobAxes(axesData.jobAxes);
     setAiProfile(profileData.profile);
+    setTemplates(templatesData.templates);
   }
 
   async function selectApplication(id: string) {
@@ -458,6 +472,8 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
         includeCv: fields.has("includeCv"),
         includeCoverLetter: fields.has("includeCoverLetter"),
         includeApproachMessage: fields.has("includeApproachMessage"),
+        cvTemplateId: fields.get("cvTemplateId") || null,
+        coverLetterTemplateId: fields.get("coverLetterTemplateId") || null,
       }),
     });
     setNotice(generationNotice(data.documents.length));
@@ -508,6 +524,31 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     });
     setNotice("Profil IA mis a jour.");
     await loadPrivateData();
+  }
+
+  async function createTemplate(form: HTMLFormElement) {
+    const fields = Object.fromEntries(new FormData(form));
+    await api("/api/templates", {
+      method: "POST",
+      body: JSON.stringify({
+        kind: fields.kind,
+        name: fields.name,
+        description: fields.description || "",
+        htmlContent: fields.htmlContent || null,
+        cssContent: fields.cssContent || null,
+        isAtsOneColumn: fields.isAtsOneColumn === "on",
+        isDefault: fields.isDefault === "on",
+      }),
+    });
+    form.reset();
+    await loadPrivateData();
+    setNotice("Template ajoute.");
+  }
+
+  async function deleteTemplate(template: Template) {
+    await api(`/api/templates/${template.id}`, { method: "DELETE" });
+    await loadPrivateData();
+    setNotice("Template supprime.");
   }
 
   const selectedApplication =
@@ -663,7 +704,19 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                 generateDocuments(selectedApplication, event.currentTarget).catch((error) => setNotice(error.message));
               }}>
                 <label><input name="includeCv" type="checkbox" defaultChecked /> CV</label>
+                <select name="cvTemplateId" aria-label="Template CV">
+                  <option value="">Template CV par defaut</option>
+                  {templates.filter((template) => template.kind === "cv").map((template) => (
+                    <option key={template.id} value={template.id}>{template.name}</option>
+                  ))}
+                </select>
                 <label><input name="includeCoverLetter" type="checkbox" defaultChecked /> Lettre</label>
+                <select name="coverLetterTemplateId" aria-label="Template lettre">
+                  <option value="">Template lettre par defaut</option>
+                  {templates.filter((template) => template.kind === "cover_letter").map((template) => (
+                    <option key={template.id} value={template.id}>{template.name}</option>
+                  ))}
+                </select>
                 <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
                 <button type="submit">Generer les documents</button>
               </form>
@@ -700,6 +753,22 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
             <section className="workspace-panel">
               <PanelTitle title="Profil IA" />
               <AiProfileForm profile={aiProfile} onSubmit={(form) => saveAiProfile(form).catch((error) => setNotice(error.message))} />
+            </section>
+            <section className="workspace-panel">
+              <PanelTitle title="Templates" />
+              <TemplateForm onSubmit={(form) => createTemplate(form).catch((error) => setNotice(error.message))} />
+              <div className="template-list">
+                {templates.map((template) => (
+                  <article key={template.id}>
+                    <div>
+                      <strong>{template.name}</strong>
+                      <small>{template.kind === "cv" ? "CV" : "Lettre"}{template.isDefault ? " - defaut" : ""}</small>
+                    </div>
+                    <button type="button" onClick={() => deleteTemplate(template).catch((error) => setNotice(error.message))}>Supprimer</button>
+                  </article>
+                ))}
+                {!templates.length && <p className="empty">Aucun template enregistre.</p>}
+              </div>
             </section>
           </section>
         )}
@@ -808,6 +877,37 @@ function AiProfileForm(props: { profile: AiProfile | null; onSubmit: (form: HTML
         <textarea name="customInstructions" defaultValue={props.profile?.customInstructions ?? ""} placeholder="Ton, contraintes, preferences..." />
       </label>
       <button type="submit">Sauvegarder le profil IA</button>
+    </form>
+  );
+}
+
+function TemplateForm(props: { onSubmit: (form: HTMLFormElement) => void }) {
+  return (
+    <form className="resource-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(event.currentTarget); }}>
+      <div className="split">
+        <label className="field">
+          <span>Type</span>
+          <select name="kind" defaultValue="cv">
+            <option value="cv">CV</option>
+            <option value="cover_letter">Lettre</option>
+          </select>
+        </label>
+        <Field name="name" placeholder="Nom du template" />
+      </div>
+      <Field name="description" placeholder="Description" required={false} />
+      <label className="field">
+        <span>HTML</span>
+        <textarea name="htmlContent" required={false} placeholder="<article>...</article>" />
+      </label>
+      <label className="field">
+        <span>CSS</span>
+        <textarea name="cssContent" required={false} placeholder="article { ... }" />
+      </label>
+      <div className="document-options">
+        <label><input name="isAtsOneColumn" type="checkbox" defaultChecked /> ATS 1 colonne</label>
+        <label><input name="isDefault" type="checkbox" /> Defaut</label>
+      </div>
+      <button type="submit">Ajouter le template</button>
     </form>
   );
 }

@@ -643,9 +643,47 @@ button:active {
   width: auto;
 }
 
+.document-options select {
+  width: auto;
+  min-width: 190px;
+  padding: 8px 10px;
+}
+
 .document-list {
   display: grid;
   gap: 10px;
+}
+
+.template-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.template-list article {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #1f2f45;
+  border-radius: 8px;
+  padding: 12px;
+  background: #0a111b;
+}
+
+.template-list strong,
+.template-list small {
+  display: block;
+}
+
+.template-list small {
+  color: #8b98aa;
+}
+
+.template-list button {
+  color: #ffbec6;
+  background: #221018;
+  border: 1px solid #5a1f2c;
 }
 
 .document-list article {
