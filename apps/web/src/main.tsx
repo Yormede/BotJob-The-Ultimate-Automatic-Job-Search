@@ -32,6 +32,15 @@ type Application = {
   lastAction?: string | null;
   nextAction?: string | null;
 };
+type ApplicationEvent = {
+  id: string;
+  eventType: string;
+  label: string;
+  state: string;
+  author: string;
+  eventAt?: string | null;
+  createdAt: string;
+};
 type JobAxis = {
   id: string;
   title: string;
@@ -244,6 +253,8 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [jobAxes, setJobAxes] = useState<JobAxis[]>([]);
   const [aiProfile, setAiProfile] = useState<AiProfile | null>(null);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const [applicationEvents, setApplicationEvents] = useState<ApplicationEvent[]>([]);
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -271,6 +282,16 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     setAiProfile(profileData.profile);
   }
 
+  async function selectApplication(id: string) {
+    setSelectedApplicationId(id);
+    await loadApplicationEvents(id);
+  }
+
+  async function loadApplicationEvents(id: string) {
+    const data = await api<{ events: ApplicationEvent[] }>(`/api/applications/${id}/events`);
+    setApplicationEvents(data.events);
+  }
+
   function askAssistant() {
     const prompt = assistantPrompt.trim();
     if (!prompt) return;
@@ -290,25 +311,51 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   }
 
   async function createApplication(form: HTMLFormElement) {
-    const fields = Object.fromEntries(new FormData(form));
-    await api("/api/applications", {
+    const data = await api<{ application: Application }>("/api/applications", {
       method: "POST",
-      body: JSON.stringify({
-        jobAxisId: fields.jobAxisId || null,
-        company: fields.company,
-        jobTitle: fields.jobTitle,
-        offerUrl: fields.offerUrl || null,
-        fullOfferText: fields.fullOfferText,
-        locationLabel: fields.locationLabel || null,
-        contractType: fields.contractType || null,
-        status: fields.status || "draft",
-        appliedAt: fields.appliedAt ? new Date(String(fields.appliedAt)).toISOString() : null,
-      }),
+      body: JSON.stringify(applicationPayload(form)),
     });
     form.reset();
     setNotice("Candidature enregistree.");
+    setSelectedApplicationId(data.application.id);
+    await loadApplicationEvents(data.application.id);
     await loadPrivateData();
     setView("applications");
+  }
+
+  async function updateApplication(form: HTMLFormElement, application: Application) {
+    const data = await api<{ application: Application }>(`/api/applications/${application.id}`, {
+      method: "PATCH",
+      body: JSON.stringify(applicationPayload(form)),
+    });
+    setNotice("Candidature mise a jour.");
+    setSelectedApplicationId(data.application.id);
+    await loadApplicationEvents(data.application.id);
+    await loadPrivateData();
+  }
+
+  async function deleteApplication(application: Application) {
+    await api(`/api/applications/${application.id}`, { method: "DELETE" });
+    setNotice("Candidature supprimee.");
+    setSelectedApplicationId(null);
+    setApplicationEvents([]);
+    await loadPrivateData();
+  }
+
+  async function createApplicationEvent(form: HTMLFormElement, application: Application) {
+    const fields = Object.fromEntries(new FormData(form));
+    await api(`/api/applications/${application.id}/events`, {
+      method: "POST",
+      body: JSON.stringify({
+        eventType: fields.eventType || "note",
+        label: fields.label,
+        state: "active",
+      }),
+    });
+    form.reset();
+    setNotice("Action ajoutee.");
+    await loadApplicationEvents(application.id);
+    await loadPrivateData();
   }
 
   async function createJobAxis(form: HTMLFormElement) {
@@ -341,6 +388,9 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     setNotice("Profil IA mis a jour.");
     await loadPrivateData();
   }
+
+  const selectedApplication =
+    applications.find((application) => application.id === selectedApplicationId) ?? applications[0] ?? null;
 
   return (
     <main className="dashboard">
@@ -433,14 +483,14 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           <section className="recent-panel">
             <PanelTitle title="Candidatures recentes" action="Voir tout" />
             {applications.slice(0, 5).map((application) => (
-              <article className="job-row" key={application.id}>
+              <button className="job-row" key={application.id} onClick={() => selectApplication(application.id).catch((error) => setNotice(error.message))}>
                 <span className="doc-icon"></span>
                 <div>
                   <strong>{application.jobTitle}</strong>
                   <small>{application.company}</small>
                 </div>
                 <em>{application.status}</em>
-              </article>
+              </button>
             ))}
             {!applications.length && <p className="empty">Aucune candidature enregistree.</p>}
           </section>
@@ -454,21 +504,40 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
         )}
 
         {view === "applications" && (
-          <section className="workspace-panel">
+          <section className="applications-view">
+            <section className="workspace-panel">
             <PanelTitle title="Candidatures" />
             <div className="application-list">
               {applications.map((application) => (
-                <article className="application-card" key={application.id}>
+                <button className={`application-card ${application.id === selectedApplication?.id ? "active" : ""}`} key={application.id} onClick={() => selectApplication(application.id).catch((error) => setNotice(error.message))}>
                   <div>
                     <strong>{application.jobTitle}</strong>
                     <small>{application.company} · {application.locationLabel || "Lieu non precise"}</small>
                   </div>
                   <em>{application.status}</em>
                   <p>{application.nextAction || application.lastAction || "Aucune action enregistree."}</p>
-                </article>
+                </button>
               ))}
               {!applications.length && <p className="empty">Creez votre premiere candidature depuis l'onglet Creer.</p>}
             </div>
+            </section>
+          {selectedApplication && (
+            <section className="workspace-panel">
+              <PanelTitle title="Detail candidature" />
+              <ApplicationForm
+                application={selectedApplication}
+                jobAxes={jobAxes}
+                submitLabel="Mettre a jour"
+                onSubmit={(form) => updateApplication(form, selectedApplication).catch((error) => setNotice(error.message))}
+              />
+              <ApplicationEventForm onSubmit={(form) => createApplicationEvent(form, selectedApplication).catch((error) => setNotice(error.message))} />
+              <div className="event-list">
+                {applicationEvents.map((event) => <p key={event.id}>{event.label}</p>)}
+                {!applicationEvents.length && <p className="empty">Aucune action historisee.</p>}
+              </div>
+              <button className="danger-button" onClick={() => deleteApplication(selectedApplication).catch((error) => setNotice(error.message))}>Supprimer la candidature</button>
+            </section>
+          )}
           </section>
         )}
 
@@ -489,12 +558,18 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   );
 }
 
-function ApplicationForm(props: { jobAxes: JobAxis[]; onSubmit: (form: HTMLFormElement) => void }) {
+function ApplicationForm(props: {
+  application?: Application;
+  jobAxes: JobAxis[];
+  submitLabel?: string;
+  onSubmit: (form: HTMLFormElement) => void;
+}) {
+  const application = props.application;
   return (
     <form className="resource-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(event.currentTarget); }}>
       <div className="split">
-        <Field name="company" placeholder="Entreprise" />
-        <Field name="jobTitle" placeholder="Poste" />
+        <Field name="company" placeholder="Entreprise" defaultValue={application?.company} />
+        <Field name="jobTitle" placeholder="Poste" defaultValue={application?.jobTitle} />
       </div>
       <div className="split">
         <label className="field">
@@ -506,27 +581,51 @@ function ApplicationForm(props: { jobAxes: JobAxis[]; onSubmit: (form: HTMLFormE
         </label>
         <label className="field">
           <span>Statut</span>
-          <select name="status" defaultValue="draft">
+          <select name="status" defaultValue={application?.status ?? "draft"}>
             <option value="draft">Brouillon</option>
             <option value="sent">Envoyee</option>
             <option value="follow_up">Relance</option>
             <option value="interview">Entretien</option>
+            <option value="accepted">Acceptee</option>
+            <option value="rejected">Refusee</option>
+            <option value="archived">Archivee</option>
           </select>
         </label>
       </div>
       <div className="split">
-        <Field name="locationLabel" placeholder="Lieu" required={false} />
-        <Field name="contractType" placeholder="Contrat" required={false} />
+        <Field name="locationLabel" placeholder="Lieu" required={false} defaultValue={application?.locationLabel ?? ""} />
+        <Field name="contractType" placeholder="Contrat" required={false} defaultValue={application?.contractType ?? ""} />
       </div>
       <div className="split">
-        <Field name="offerUrl" type="url" placeholder="URL de l'offre" required={false} />
-        <Field name="appliedAt" type="date" placeholder="Date d'envoi" required={false} />
+        <Field name="offerUrl" type="url" placeholder="URL de l'offre" required={false} defaultValue={application?.offerUrl ?? ""} />
+        <Field name="appliedAt" type="date" placeholder="Date d'envoi" required={false} defaultValue={dateInputValue(application?.appliedAt)} />
       </div>
       <label className="field">
         <span>Annonce complete</span>
-        <textarea name="fullOfferText" required placeholder="Collez l'annonce ici" />
+        <textarea name="fullOfferText" required placeholder="Collez l'annonce ici" defaultValue={application?.fullOfferText ?? ""} />
       </label>
-      <button type="submit">Enregistrer la candidature</button>
+      <button type="submit">{props.submitLabel ?? "Enregistrer la candidature"}</button>
+    </form>
+  );
+}
+
+function ApplicationEventForm(props: { onSubmit: (form: HTMLFormElement) => void }) {
+  return (
+    <form className="resource-form compact-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(event.currentTarget); }}>
+      <div className="split">
+        <label className="field">
+          <span>Type d'action</span>
+          <select name="eventType" defaultValue="note">
+            <option value="note">Note</option>
+            <option value="last_action">Derniere action</option>
+            <option value="next_action">Prochaine action</option>
+            <option value="follow_up">Relance</option>
+            <option value="interview">Entretien</option>
+          </select>
+        </label>
+        <Field name="label" placeholder="Action ou note" />
+      </div>
+      <button type="submit">Ajouter l'action</button>
     </form>
   );
 }
@@ -618,6 +717,25 @@ function escapeHtml(value: string) {
     };
     return entities[character];
   });
+}
+
+function applicationPayload(form: HTMLFormElement) {
+  const fields = Object.fromEntries(new FormData(form));
+  return {
+    jobAxisId: fields.jobAxisId || null,
+    company: fields.company,
+    jobTitle: fields.jobTitle,
+    offerUrl: fields.offerUrl || null,
+    fullOfferText: fields.fullOfferText,
+    locationLabel: fields.locationLabel || null,
+    contractType: fields.contractType || null,
+    status: fields.status || "draft",
+    appliedAt: fields.appliedAt ? new Date(String(fields.appliedAt)).toISOString() : null,
+  };
+}
+
+function dateInputValue(value: string | null | undefined) {
+  return value ? value.slice(0, 10) : "";
 }
 
 createRoot(document.getElementById("root")!).render(<App />);

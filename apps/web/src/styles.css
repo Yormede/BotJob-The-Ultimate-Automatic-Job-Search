@@ -511,8 +511,13 @@ button:active {
   grid-template-columns: 34px 1fr auto;
   align-items: center;
   gap: 10px;
+  width: 100%;
   border-top: 1px solid #182536;
+  border-radius: 0;
   padding: 12px 0;
+  text-align: left;
+  color: inherit;
+  background: transparent;
 }
 
 .job-row .doc-icon {
@@ -552,9 +557,15 @@ button:active {
 
 .resource-form,
 .application-list,
-.settings-grid {
+.settings-grid,
+.applications-view {
   display: grid;
   gap: 12px;
+}
+
+.applications-view {
+  grid-template-columns: minmax(280px, 0.85fr) minmax(360px, 1.15fr);
+  margin-top: 18px;
 }
 
 .settings-grid {
@@ -564,6 +575,12 @@ button:active {
 .application-card {
   border-radius: 8px;
   padding: 14px;
+  text-align: left;
+  color: inherit;
+}
+
+.application-card.active {
+  border-color: #247cff;
 }
 
 .application-card strong,
@@ -587,11 +604,28 @@ button:active {
   font-style: normal;
 }
 
+.compact-form,
+.event-list {
+  margin-top: 14px;
+}
+
+.event-list p {
+  border-top: 1px solid #182536;
+  padding-top: 10px;
+  color: #b8c3d2;
+}
+
+.danger-button {
+  margin-top: 12px;
+  background: #8f1f2d;
+}
+
 @media (max-width: 760px) {
   .auth-page,
   .dashboard,
   .split,
-  .settings-grid {
+  .settings-grid,
+  .applications-view {
     grid-template-columns: 1fr;
   }
 
