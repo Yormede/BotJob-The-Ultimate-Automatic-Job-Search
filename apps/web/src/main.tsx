@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { assistantDecisionFromPrompt } from "../../../src/modules/applications/assistant-rules";
 import "./styles.css";
 
 type User = {
@@ -432,22 +433,56 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     setGeneratedDocuments(data.documents);
   }
 
-  function askAssistant() {
+  async function askAssistant() {
     const prompt = assistantPrompt.trim();
     if (!prompt) return;
 
+    const selectedApplication = applications.find((application) => application.id === selectedApplicationId) ?? null;
+    const targetApplicationId = selectedApplicationId;
+    const decision = assistantDecisionFromPrompt(prompt);
     const target = inferTarget(prompt);
     setCvPreview(generateDemoCv(props.user, target));
+    setAssistantPrompt("");
+
+    if (decision.kind === "forbidden" || decision.kind === "unknown") {
+      setMessages((current) => [
+        ...current,
+        { role: "user", content: prompt },
+        { role: "assistant", content: decision.message },
+      ]);
+      return;
+    }
+
+    if (!targetApplicationId) {
+      setMessages((current) => [
+        ...current,
+        { role: "user", content: prompt },
+        {
+          role: "assistant",
+          content: "Selectionnez une candidature dans Candidatures, puis je pourrai ajouter cette mise a jour dans son historique.",
+        },
+      ]);
+      return;
+    }
+
+    await api(`/api/applications/${targetApplicationId}/events`, {
+      method: "POST",
+      body: JSON.stringify({
+        eventType: decision.eventType,
+        label: decision.label,
+        state: "active",
+        author: "assistant",
+      }),
+    });
+    await Promise.all([loadApplicationEvents(targetApplicationId), loadPrivateData()]);
     setMessages((current) => [
       ...current,
       { role: "user", content: prompt },
       {
         role: "assistant",
-        content:
-          "J'ai prepare un apercu CV de demonstration. Pour enregistrer cette opportunite, utilisez Creation rapide.",
+        content: `J'ai mis a jour ${selectedApplication?.company ?? "la candidature"} dans l'historique.`,
       },
     ]);
-    setAssistantPrompt("");
   }
 
   async function createApplication(form: HTMLFormElement) {
@@ -675,10 +710,10 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                 value={assistantPrompt}
                 onChange={(event) => setAssistantPrompt(event.target.value)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") askAssistant();
+                  if (event.key === "Enter") askAssistant().catch((error) => setNotice(error.message));
                 }}
               />
-              <button onClick={askAssistant}>Envoyer</button>
+              <button onClick={() => askAssistant().catch((error) => setNotice(error.message))}>Envoyer</button>
             </label>
           </section>
 
