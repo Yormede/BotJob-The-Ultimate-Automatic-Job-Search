@@ -326,9 +326,18 @@ function AuthForm(props: {
           <Field name="username" placeholder="Nom d'utilisateur" />
           <Field name="email" type="email" placeholder="Email" />
           <div className="split">
+            <label className="field">
+              <span>Indicatif</span>
+              <select name="phoneCountryCode" defaultValue="+33">
+                <option value="+33">France +33</option>
+                <option value="+32">Belgique +32</option>
+                <option value="+41">Suisse +41</option>
+                <option value="+1">Canada/USA +1</option>
+              </select>
+            </label>
             <Field name="phoneNumber" placeholder="Telephone" />
-            <Field name="password" type="password" placeholder="Mot de passe" minLength={8} />
           </div>
+          <Field name="password" type="password" placeholder="Mot de passe" minLength={8} />
         </>
       ) : (
         <>
