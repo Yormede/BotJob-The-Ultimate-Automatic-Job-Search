@@ -91,6 +91,12 @@ const DOCUMENT_LABELS: Record<GeneratedDocument["kind"], string> = {
   approach_message: "Message",
 };
 
+const APPLICATION_COLUMNS = [
+  ["location", "Lieu"],
+  ["status", "Statut"],
+  ["action", "Action"],
+] as const;
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:3000";
 
 async function api<T>(path: string, init?: RequestInit): Promise<T> {
@@ -380,6 +386,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   const [generatedDocuments, setGeneratedDocuments] = useState<GeneratedDocument[]>([]);
   const [applicationQuery, setApplicationQuery] = useState("");
   const [applicationStatusFilter, setApplicationStatusFilter] = useState("all");
+  const [visibleApplicationColumns, setVisibleApplicationColumns] = useState(() => new Set(APPLICATION_COLUMNS.map(([key]) => key)));
   const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(true);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -773,6 +780,22 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                   ))}
                 </select>
               </div>
+              <div className="column-toggles" aria-label="Colonnes affichees">
+                {APPLICATION_COLUMNS.map(([key, label]) => (
+                  <label key={key}>
+                    <input
+                      type="checkbox"
+                      checked={visibleApplicationColumns.has(key)}
+                      onChange={() => setVisibleApplicationColumns((current) => {
+                        const next = new Set(current);
+                        next.has(key) ? next.delete(key) : next.add(key);
+                        return next;
+                      })}
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
               <div className="application-list">
                 {visibleApplications.map((application) => (
                   <button className={`application-card ${application.id === selectedApplication?.id ? "active" : ""}`} key={application.id} onClick={() => selectApplication(application.id).catch((error) => setNotice(error.message))}>
@@ -780,11 +803,11 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                       <span className="doc-icon"></span>
                       <div>
                         <strong>{application.jobTitle}</strong>
-                        <small>{application.company} - {application.locationLabel || "Lieu non precise"}</small>
+                        <small>{application.company}{visibleApplicationColumns.has("location") ? ` - ${application.locationLabel || "Lieu non precise"}` : ""}</small>
                       </div>
                     </div>
-                    <span className={`status-pill status-${application.status}`}>{statusLabel(application.status)}</span>
-                    <p>{application.nextAction || application.lastAction || "Aucune action enregistree."}</p>
+                    {visibleApplicationColumns.has("status") && <span className={`status-pill status-${application.status}`}>{statusLabel(application.status)}</span>}
+                    {visibleApplicationColumns.has("action") && <p>{application.nextAction || application.lastAction || "Aucune action enregistree."}</p>}
                   </button>
                 ))}
                 {!applications.length && <p className="empty">Creez votre premiere candidature depuis l'onglet Creer.</p>}

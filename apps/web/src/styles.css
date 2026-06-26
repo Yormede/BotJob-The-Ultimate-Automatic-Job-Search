@@ -647,6 +647,24 @@ button:active {
   margin-bottom: 2px;
 }
 
+.column-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.column-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #203047;
+  border-radius: 6px;
+  padding: 7px 9px;
+  color: #b8c3d2;
+  background: #0a111b;
+  font-size: 12px;
+}
+
 .settings-grid {
   grid-template-columns: 1fr 1fr;
 }
