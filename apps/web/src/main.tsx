@@ -465,12 +465,7 @@ function AuthForm(props: {
       {props.error && <p className="error">{props.error}</p>}
       <button type="submit">{props.mode === "login" ? "Se connecter" : "Creer mon espace"}</button>
       {props.mode === "login" && (
-        <>
-          <button className="link-button" type="button" onClick={props.onForgotPassword}>Mot de passe oublie ?</button>
-          <div className="divider">ou</div>
-          <button className="provider-button" type="button">Continuer avec Google</button>
-          <button className="provider-button" type="button">Continuer avec Apple</button>
-        </>
+        <button className="link-button" type="button" onClick={props.onForgotPassword}>Mot de passe oublie ?</button>
       )}
     </form>
   );

@@ -229,22 +229,6 @@ button:active {
   border: 1px solid #233247;
 }
 
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #7e8a9b;
-  font-size: 12px;
-}
-
-.divider::before,
-.divider::after {
-  content: "";
-  height: 1px;
-  flex: 1;
-  background: #1d2939;
-}
-
 .error {
   color: #ffb4a8;
 }
