@@ -18,8 +18,8 @@ Stack MVP:
 
 ## Current MVP status
 
-- PostgreSQL migrations available for the core MVP tables, auth codes and generated documents.
-- Backend implemented for auth, sessions, dashboard, applications, application events, job axes, templates, AI profile and local document generation.
+- PostgreSQL migrations available for the core MVP tables, auth codes, generated documents and credit tracking.
+- Backend implemented for auth, sessions, dashboard, applications, application events, job axes, templates, AI profile, local document generation and credit pricing.
 - Email verification by code is implemented; in development the code is returned by the API so the flow can be tested without an email provider.
 - Private data access is scoped by `user_id` in repositories.
 - Dashboard frontend includes a local assistant demo and CV HTML/CSS preview.
@@ -97,5 +97,11 @@ bun test
 - `POST /api/templates`
 - `PATCH /api/templates/:id`
 - `DELETE /api/templates/:id`
+- `GET /api/credits`
+- `POST /api/credits/adjust`
+- `POST /api/credits/quote`
+- `POST /api/credits/spend`
+- `POST /api/credits/models`
+- `PUT /api/credits/models/:modelKey`
 
 Skipped for now: external email delivery, persistent rate limiting, external AI provider and file/PDF storage.

@@ -38,6 +38,13 @@ import {
   generateDocumentsController,
   listGeneratedDocumentsController,
 } from "./modules/generation/generation.routes";
+import {
+  adjustCreditsController,
+  creditOverviewController,
+  quoteCreditsController,
+  spendCreditsController,
+  upsertModelPriceController,
+} from "./modules/credits/credits.routes";
 
 const exactRoutes = new Map<string, Handler>([
   ["POST /api/auth/register", wrapRequest(registerController)],
@@ -55,6 +62,11 @@ const exactRoutes = new Map<string, Handler>([
   ["PUT /api/ai-profile", upsertAiProfileController],
   ["GET /api/templates", listTemplatesController],
   ["POST /api/templates", createTemplateController],
+  ["GET /api/credits", creditOverviewController],
+  ["POST /api/credits/adjust", adjustCreditsController],
+  ["POST /api/credits/quote", quoteCreditsController],
+  ["POST /api/credits/spend", spendCreditsController],
+  ["POST /api/credits/models", upsertModelPriceController],
 ]);
 
 const dynamicRoutes: Array<{
@@ -128,6 +140,12 @@ const dynamicRoutes: Array<{
     pattern: /^\/api\/templates\/([^/]+)$/,
     params: ["id"],
     handler: deleteTemplateController,
+  },
+  {
+    method: "PUT",
+    pattern: /^\/api\/credits\/models\/([^/]+)$/,
+    params: ["modelKey"],
+    handler: upsertModelPriceController,
   },
 ];
 
