@@ -956,6 +956,19 @@ button:active {
   border: 1px solid #5a1f2c;
 }
 
+.template-actions,
+.template-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.secondary-button {
+  color: #d7e4f5;
+  background: #0d1724;
+  border: 1px solid #203047;
+}
+
 .document-list article {
   border: 1px solid #1f2f45;
   border-radius: 8px;

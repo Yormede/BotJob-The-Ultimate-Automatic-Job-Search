@@ -384,6 +384,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   const [applications, setApplications] = useState<Application[]>([]);
   const [jobAxes, setJobAxes] = useState<JobAxis[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [aiProfile, setAiProfile] = useState<AiProfile | null>(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
   const [applicationEvents, setApplicationEvents] = useState<ApplicationEvent[]>([]);
@@ -600,10 +601,11 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
     await loadPrivateData();
   }
 
-  async function createTemplate(form: HTMLFormElement) {
+  async function saveTemplate(form: HTMLFormElement) {
     const fields = Object.fromEntries(new FormData(form));
-    await api("/api/templates", {
-      method: "POST",
+    const isEditing = Boolean(editingTemplate);
+    await api(isEditing ? `/api/templates/${editingTemplate!.id}` : "/api/templates", {
+      method: isEditing ? "PATCH" : "POST",
       body: JSON.stringify({
         kind: fields.kind,
         name: fields.name,
@@ -615,12 +617,14 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
       }),
     });
     form.reset();
+    setEditingTemplate(null);
     await loadPrivateData();
-    setNotice("Template ajoute.");
+    setNotice(isEditing ? "Template mis a jour." : "Template ajoute.");
   }
 
   async function deleteTemplate(template: Template) {
     await api(`/api/templates/${template.id}`, { method: "DELETE" });
+    if (editingTemplate?.id === template.id) setEditingTemplate(null);
     await loadPrivateData();
     setNotice("Template supprime.");
   }
@@ -944,7 +948,12 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
               </section>
               <section className="workspace-panel">
                 <PanelTitle title="Templates" />
-                <TemplateForm onSubmit={(form) => createTemplate(form).catch((error) => setNotice(error.message))} />
+                <TemplateForm
+                  key={editingTemplate?.id ?? "new-template"}
+                  template={editingTemplate}
+                  onCancel={editingTemplate ? () => setEditingTemplate(null) : undefined}
+                  onSubmit={(form) => saveTemplate(form).catch((error) => setNotice(error.message))}
+                />
                 <div className="template-list">
                   {templates.map((template) => (
                     <article key={template.id}>
@@ -952,7 +961,10 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                         <strong>{template.name}</strong>
                         <small>{template.kind === "cv" ? "CV" : "Lettre"}{template.isDefault ? " - defaut" : ""}</small>
                       </div>
-                      <button type="button" onClick={() => deleteTemplate(template).catch((error) => setNotice(error.message))}>Supprimer</button>
+                      <div className="template-actions">
+                        <button type="button" onClick={() => setEditingTemplate(template)}>Modifier</button>
+                        <button type="button" onClick={() => deleteTemplate(template).catch((error) => setNotice(error.message))}>Supprimer</button>
+                      </div>
                     </article>
                   ))}
                   {!templates.length && <p className="empty">Aucun template enregistre.</p>}
@@ -1155,33 +1167,42 @@ function AiProfileForm(props: { profile: AiProfile | null; onSubmit: (form: HTML
   );
 }
 
-function TemplateForm(props: { onSubmit: (form: HTMLFormElement) => void }) {
+function TemplateForm(props: {
+  template?: Template | null;
+  onCancel?: () => void;
+  onSubmit: (form: HTMLFormElement) => void;
+}) {
+  const template = props.template;
+
   return (
     <form className="resource-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(event.currentTarget); }}>
       <div className="split">
         <label className="field">
           <span>Type</span>
-          <select name="kind" defaultValue="cv">
+          <select name="kind" defaultValue={template?.kind ?? "cv"}>
             <option value="cv">CV</option>
             <option value="cover_letter">Lettre</option>
           </select>
         </label>
-        <Field name="name" placeholder="Nom du template" />
+        <Field name="name" placeholder="Nom du template" defaultValue={template?.name ?? ""} />
       </div>
-      <Field name="description" placeholder="Description" required={false} />
+      <Field name="description" placeholder="Description" required={false} defaultValue={template?.description ?? ""} />
       <label className="field">
         <span>HTML</span>
-        <textarea name="htmlContent" required={false} placeholder="<article>...</article>" />
+        <textarea name="htmlContent" required={false} placeholder="<article>...</article>" defaultValue={template?.htmlContent ?? ""} />
       </label>
       <label className="field">
         <span>CSS</span>
-        <textarea name="cssContent" required={false} placeholder="article { ... }" />
+        <textarea name="cssContent" required={false} placeholder="article { ... }" defaultValue={template?.cssContent ?? ""} />
       </label>
       <div className="document-options">
-        <label><input name="isAtsOneColumn" type="checkbox" defaultChecked /> ATS 1 colonne</label>
-        <label><input name="isDefault" type="checkbox" /> Defaut</label>
+        <label><input name="isAtsOneColumn" type="checkbox" defaultChecked={template?.isAtsOneColumn ?? true} /> ATS 1 colonne</label>
+        <label><input name="isDefault" type="checkbox" defaultChecked={template?.isDefault ?? false} /> Defaut</label>
       </div>
-      <button type="submit">Ajouter le template</button>
+      <div className="template-form-actions">
+        <button type="submit">{template ? "Mettre a jour le template" : "Ajouter le template"}</button>
+        {props.onCancel && <button type="button" className="secondary-button" onClick={props.onCancel}>Annuler</button>}
+      </div>
     </form>
   );
 }
