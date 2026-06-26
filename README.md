@@ -24,7 +24,7 @@ Stack MVP:
 - Password reset by code is implemented; in development the reset code is also returned by the API for local testing.
 - Private data access is scoped by `user_id` in repositories.
 - Dashboard frontend includes a local assistant demo and CV HTML/CSS preview.
-- Latest validation: `bun test` = 18 pass / 0 fail, Vite production build OK.
+- Latest validation: `bun test` = 28 pass / 0 fail, including one end-to-end V1 journey (auth, dashboard, axes, templates, applications, generation, credits, password reset), and Vite production build OK.
 
 ## Installation
 
