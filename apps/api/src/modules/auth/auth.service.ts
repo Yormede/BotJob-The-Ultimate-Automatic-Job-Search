@@ -11,11 +11,14 @@ import {
   findUserForLogin,
   findUserForVerification,
   revokeSession,
+  revokeUserSessions,
+  updateUserPassword,
   type SqlClient,
 } from "./auth.repository";
 
 const SESSION_DAYS = 14;
 const VERIFICATION_CODE_MINUTES = 20;
+const PASSWORD_RESET_MINUTES = 20;
 export const SESSION_MAX_AGE_SECONDS = SESSION_DAYS * 24 * 60 * 60;
 
 export type AuthResult = {
@@ -34,6 +37,22 @@ export function hashToken(token: string) {
 
 export function hashAuthCode(code: string) {
   return hashToken(code.trim());
+}
+
+export function normalizeNewPasswordInput(body: Record<string, unknown>) {
+  const login = requireText(body.login, "email ou username");
+  const code = requireText(body.code, "code");
+  const newPassword = requireText(body.newPassword, "nouveau mot de passe");
+  const confirmPassword = requireText(body.confirmPassword, "confirmation");
+
+  if (newPassword.length < 8) throw new Error("mot de passe trop court");
+  if (newPassword !== confirmPassword) throw new Error("mots de passe differents");
+
+  return {
+    login,
+    code,
+    newPassword,
+  };
 }
 
 function normalizeEmail(email: string) {
@@ -144,6 +163,42 @@ export async function resendVerificationCode(sql: SqlClient, body: Record<string
   );
 
   return { alreadyVerified: false, verificationCode: exposeDevCode(verificationCode) };
+}
+
+export async function requestPasswordReset(sql: SqlClient, body: Record<string, unknown>) {
+  const loginValue = requireText(body.login, "email ou username");
+  const user = await findUserForLogin(sql, loginValue);
+  if (!user || user.status !== "active") {
+    return { resetCode: undefined };
+  }
+
+  const resetCode = newVerificationCode();
+  await createAuthCode(
+    sql,
+    user.id,
+    "password_reset",
+    hashAuthCode(resetCode),
+    new Date(Date.now() + PASSWORD_RESET_MINUTES * 60 * 1000),
+  );
+
+  return { resetCode: exposeDevCode(resetCode) };
+}
+
+export async function resetPassword(sql: SqlClient, body: Record<string, unknown>) {
+  const input = normalizeNewPasswordInput(body);
+  const user = await findUserForLogin(sql, input.login);
+  if (!user || user.status !== "active") throw new Error("code invalide ou expire");
+
+  const authCode = await findActiveAuthCode(sql, user.id, "password_reset");
+  if (!authCode || authCode.codeHash !== hashAuthCode(input.code)) {
+    throw new Error("code invalide ou expire");
+  }
+
+  await consumeAuthCode(sql, authCode.id);
+  await updateUserPassword(sql, user.id, await Bun.password.hash(input.newPassword));
+  await revokeUserSessions(sql, user.id);
+
+  return { ok: true };
 }
 
 export async function getSessionUser(sql: SqlClient, token: string | undefined) {

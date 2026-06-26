@@ -21,6 +21,7 @@ Stack MVP:
 - PostgreSQL migrations available for the core MVP tables, auth codes, generated documents and credit tracking.
 - Backend implemented for auth, sessions, dashboard, applications, application events, job axes, templates, AI profile, local document generation and credit pricing.
 - Email verification by code is implemented; in development the code is returned by the API so the flow can be tested without an email provider.
+- Password reset by code is implemented; in development the reset code is also returned by the API for local testing.
 - Private data access is scoped by `user_id` in repositories.
 - Dashboard frontend includes a local assistant demo and CV HTML/CSS preview.
 - Latest validation: `bun test` = 18 pass / 0 fail, Vite production build OK.
@@ -75,6 +76,8 @@ bun test
 - `POST /api/auth/login`
 - `POST /api/auth/verify-email`
 - `POST /api/auth/resend-verification`
+- `POST /api/auth/reset-password`
+- `POST /api/auth/new-password`
 - `GET /api/auth/session`
 - `POST /api/auth/logout`
 - `GET /api/dashboard`

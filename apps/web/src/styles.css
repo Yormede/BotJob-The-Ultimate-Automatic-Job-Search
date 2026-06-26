@@ -249,6 +249,10 @@ button:active {
   color: #ffb4a8;
 }
 
+.info {
+  color: #9fd0ff;
+}
+
 .dev-code {
   border: 1px solid #1f8c80;
   border-radius: 8px;

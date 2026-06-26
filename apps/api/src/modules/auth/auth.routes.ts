@@ -11,7 +11,9 @@ import {
   getSessionUser,
   login,
   logout,
+  requestPasswordReset,
   register,
+  resetPassword,
   resendVerificationCode,
   SESSION_MAX_AGE_SECONDS,
   verifyEmail,
@@ -67,6 +69,40 @@ export async function resendVerificationController(request: Request) {
     return json(result);
   } catch (error) {
     return badRequest(error instanceof Error ? error.message : "renvoi impossible");
+  } finally {
+    await sql.close();
+  }
+}
+
+export async function requestPasswordResetController(request: Request) {
+  const body = await readJson<Record<string, unknown>>(request);
+  if (!body) return badRequest("JSON invalide");
+
+  const sql = getSql();
+  try {
+    const result = await requestPasswordReset(sql, body);
+    return json({
+      ok: true,
+      resetCode: result.resetCode,
+      message: "Si le compte existe, les instructions de reinitialisation sont pretes.",
+    });
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "reinitialisation impossible");
+  } finally {
+    await sql.close();
+  }
+}
+
+export async function resetPasswordController(request: Request) {
+  const body = await readJson<Record<string, unknown>>(request);
+  if (!body) return badRequest("JSON invalide");
+
+  const sql = getSql();
+  try {
+    const result = await resetPassword(sql, body);
+    return json(result);
+  } catch (error) {
+    return badRequest(error instanceof Error ? error.message : "mot de passe impossible");
   } finally {
     await sql.close();
   }

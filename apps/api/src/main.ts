@@ -3,7 +3,9 @@ import { corsPreflight, json, type Handler, type HandlerContext } from "./shared
 import {
   loginController,
   logoutController,
+  requestPasswordResetController,
   registerController,
+  resetPasswordController,
   resendVerificationController,
   sessionController,
   verifyEmailController,
@@ -51,6 +53,8 @@ const exactRoutes = new Map<string, Handler>([
   ["POST /api/auth/login", wrapRequest(loginController)],
   ["POST /api/auth/verify-email", wrapRequest(verifyEmailController)],
   ["POST /api/auth/resend-verification", wrapRequest(resendVerificationController)],
+  ["POST /api/auth/reset-password", wrapRequest(requestPasswordResetController)],
+  ["POST /api/auth/new-password", wrapRequest(resetPasswordController)],
   ["GET /api/auth/session", wrapRequest(sessionController)],
   ["POST /api/auth/logout", wrapRequest(logoutController)],
   ["GET /api/dashboard", dashboardController],

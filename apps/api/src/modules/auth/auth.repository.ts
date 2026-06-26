@@ -193,3 +193,21 @@ export async function revokeSession(sql: SqlClient, tokenHash: string) {
     WHERE session_token_hash = ${tokenHash}
   `;
 }
+
+export async function updateUserPassword(sql: SqlClient, userId: string, passwordHash: string) {
+  await sql`
+    UPDATE users
+    SET password_hash = ${passwordHash},
+        updated_at = now()
+    WHERE id = ${userId}
+  `;
+}
+
+export async function revokeUserSessions(sql: SqlClient, userId: string) {
+  await sql`
+    UPDATE user_sessions
+    SET revoked_at = now()
+    WHERE user_id = ${userId}
+      AND revoked_at IS NULL
+  `;
+}

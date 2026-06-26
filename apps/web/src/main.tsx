@@ -118,8 +118,11 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [route, setRoute] = useState(location.pathname);
   const [error, setError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
   const [pendingEmail, setPendingEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
+  const [pendingResetLogin, setPendingResetLogin] = useState("");
+  const [resetCode, setResetCode] = useState("");
 
   useEffect(() => {
     api<{ user: User | null }>("/api/auth/session")
@@ -154,11 +157,13 @@ function App() {
     if (mode === "register") {
       setPendingEmail(String(fields.email || ""));
       setVerificationCode(data.verificationCode || "");
+      setAuthNotice("");
       go("/verify-email");
       return;
     }
 
     setUser(data.user);
+    setAuthNotice("");
     go("/dashboard");
   }
 
@@ -170,6 +175,7 @@ function App() {
     });
     setUser(data.user);
     setVerificationCode("");
+    setAuthNotice("");
     go("/dashboard");
   }
 
@@ -184,9 +190,41 @@ function App() {
     setError(data.alreadyVerified ? "Email deja verifie, vous pouvez vous connecter." : "");
   }
 
+  async function requestPasswordReset(form: HTMLFormElement) {
+    const fields = Object.fromEntries(new FormData(form));
+    const login = String(fields.login || "").trim();
+    const data = await api<{ resetCode?: string; message: string }>("/api/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ login }),
+    });
+    setPendingResetLogin(login);
+    setResetCode(data.resetCode || "");
+    setAuthNotice(data.message);
+    go("/new-password");
+  }
+
+  async function submitNewPassword(form: HTMLFormElement) {
+    const fields = Object.fromEntries(new FormData(form));
+    await api("/api/auth/new-password", {
+      method: "POST",
+      body: JSON.stringify({
+        login: fields.login,
+        code: fields.code,
+        newPassword: fields.newPassword,
+        confirmPassword: fields.confirmPassword,
+      }),
+    });
+    setResetCode("");
+    setPendingResetLogin("");
+    setError("");
+    setAuthNotice("Mot de passe mis a jour. Vous pouvez vous connecter.");
+    go("/login");
+  }
+
   async function logout() {
     await api("/api/auth/logout", { method: "POST" });
     setUser(null);
+    setAuthNotice("");
     go("/login");
   }
 
@@ -197,12 +235,20 @@ function App() {
         title="Creer votre espace BotJob"
         subtitle="Configurez votre identite et votre premiere session privee."
         switchLabel="Deja inscrit ? Se connecter"
-        onSwitch={() => go("/login")}
+        onSwitch={() => {
+          setAuthNotice("");
+          go("/login");
+        }}
       >
         <AuthForm
           error={error}
+          notice={authNotice}
           mode="register"
           onSubmit={(form) => submitAuth(form, "register").catch((e) => setError(e.message))}
+          onForgotPassword={() => {
+            setAuthNotice("");
+            go("/reset-password");
+          }}
         />
       </AuthShell>
     );
@@ -215,14 +261,62 @@ function App() {
         title="Verifiez votre email"
         subtitle="Saisissez le code recu pour activer votre espace BotJob."
         switchLabel="Retour a la connexion"
-        onSwitch={() => go("/login")}
+        onSwitch={() => {
+          setAuthNotice("");
+          go("/login");
+        }}
       >
         <VerifyEmailForm
           email={pendingEmail}
           error={error}
+          notice={authNotice}
           verificationCode={verificationCode}
           onResend={() => resendVerification().catch((e) => setError(e.message))}
           onSubmit={(form) => submitVerification(form).catch((e) => setError(e.message))}
+        />
+      </AuthShell>
+    );
+  }
+
+  if (route === "/reset-password") {
+    return (
+      <AuthShell
+        mode="verify"
+        title="Reinitialiser le mot de passe"
+        subtitle="Indiquez votre email ou nom d'utilisateur pour preparer un code de reinitialisation."
+        switchLabel="Retour a la connexion"
+        onSwitch={() => {
+          setAuthNotice("");
+          go("/login");
+        }}
+      >
+        <ResetPasswordRequestForm
+          error={error}
+          notice={authNotice}
+          onSubmit={(form) => requestPasswordReset(form).catch((e) => setError(e.message))}
+        />
+      </AuthShell>
+    );
+  }
+
+  if (route === "/new-password") {
+    return (
+      <AuthShell
+        mode="verify"
+        title="Definir un nouveau mot de passe"
+        subtitle="Saisissez le code recu puis choisissez votre nouveau mot de passe."
+        switchLabel="Retour a la connexion"
+        onSwitch={() => {
+          setAuthNotice("");
+          go("/login");
+        }}
+      >
+        <NewPasswordForm
+          login={pendingResetLogin}
+          error={error}
+          notice={authNotice}
+          resetCode={resetCode}
+          onSubmit={(form) => submitNewPassword(form).catch((e) => setError(e.message))}
         />
       </AuthShell>
     );
@@ -235,12 +329,20 @@ function App() {
         title="Bon retour sur BotJob"
         subtitle="Connectez-vous a votre espace prive."
         switchLabel="Pas encore de compte ? Creer un compte"
-        onSwitch={() => go("/register")}
+        onSwitch={() => {
+          setAuthNotice("");
+          go("/register");
+        }}
       >
         <AuthForm
           error={error}
+          notice={authNotice}
           mode="login"
           onSubmit={(form) => submitAuth(form, "login").catch((e) => setError(e.message))}
+          onForgotPassword={() => {
+            setAuthNotice("");
+            go("/reset-password");
+          }}
         />
       </AuthShell>
     );
@@ -292,6 +394,7 @@ function AuthShell(props: {
 function VerifyEmailForm(props: {
   email: string;
   error: string;
+  notice: string;
   verificationCode: string;
   onSubmit: (form: HTMLFormElement) => void;
   onResend: () => void;
@@ -306,6 +409,7 @@ function VerifyEmailForm(props: {
     >
       <Field name="email" type="email" placeholder="Email" defaultValue={props.email} />
       <Field name="code" placeholder="Code a 6 chiffres" minLength={6} maxLength={6} />
+      {props.notice && <p className="info">{props.notice}</p>}
       {props.verificationCode && <p className="dev-code">Code de test : {props.verificationCode}</p>}
       {props.error && <p className="error">{props.error}</p>}
       <button type="submit">Verifier mon email</button>
@@ -317,7 +421,9 @@ function VerifyEmailForm(props: {
 function AuthForm(props: {
   mode: "login" | "register";
   error: string;
+  notice: string;
   onSubmit: (form: HTMLFormElement) => void;
+  onForgotPassword: () => void;
 }) {
   return (
     <form
@@ -355,15 +461,65 @@ function AuthForm(props: {
           <Field name="password" type="password" placeholder="Mot de passe" />
         </>
       )}
+      {props.notice && <p className="info">{props.notice}</p>}
       {props.error && <p className="error">{props.error}</p>}
       <button type="submit">{props.mode === "login" ? "Se connecter" : "Creer mon espace"}</button>
       {props.mode === "login" && (
         <>
+          <button className="link-button" type="button" onClick={props.onForgotPassword}>Mot de passe oublie ?</button>
           <div className="divider">ou</div>
           <button className="provider-button" type="button">Continuer avec Google</button>
           <button className="provider-button" type="button">Continuer avec Apple</button>
         </>
       )}
+    </form>
+  );
+}
+
+function ResetPasswordRequestForm(props: {
+  error: string;
+  notice: string;
+  onSubmit: (form: HTMLFormElement) => void;
+}) {
+  return (
+    <form
+      className="auth-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        props.onSubmit(event.currentTarget);
+      }}
+    >
+      <Field name="login" placeholder="Email ou nom d'utilisateur" />
+      {props.notice && <p className="info">{props.notice}</p>}
+      {props.error && <p className="error">{props.error}</p>}
+      <button type="submit">Envoyer les instructions</button>
+    </form>
+  );
+}
+
+function NewPasswordForm(props: {
+  login: string;
+  error: string;
+  notice: string;
+  resetCode: string;
+  onSubmit: (form: HTMLFormElement) => void;
+}) {
+  return (
+    <form
+      className="auth-form"
+      onSubmit={(event) => {
+        event.preventDefault();
+        props.onSubmit(event.currentTarget);
+      }}
+    >
+      <Field name="login" placeholder="Email ou nom d'utilisateur" defaultValue={props.login} />
+      <Field name="code" placeholder="Code de reinitialisation" defaultValue={props.resetCode} minLength={6} maxLength={6} />
+      <Field name="newPassword" type="password" placeholder="Nouveau mot de passe" minLength={8} />
+      <Field name="confirmPassword" type="password" placeholder="Confirmation du mot de passe" minLength={8} />
+      {props.notice && <p className="info">{props.notice}</p>}
+      {props.resetCode && <p className="dev-code">Code de test : {props.resetCode}</p>}
+      {props.error && <p className="error">{props.error}</p>}
+      <button type="submit">Mettre a jour le mot de passe</button>
     </form>
   );
 }
