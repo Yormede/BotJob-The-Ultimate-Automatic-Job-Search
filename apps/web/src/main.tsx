@@ -443,12 +443,21 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   }
 
   async function createApplication(form: HTMLFormElement) {
+    const generationPayload = generationPayloadFromForm(form);
     const data = await api<{ application: Application }>("/api/applications", {
       method: "POST",
       body: JSON.stringify(applicationPayload(form)),
     });
+    let generatedCount = 0;
+    if (generationPayload.includeCv || generationPayload.includeCoverLetter || generationPayload.includeApproachMessage) {
+      const generated = await api<{ documents: GeneratedDocument[] }>(`/api/applications/${data.application.id}/generate`, {
+        method: "POST",
+        body: JSON.stringify(generationPayload),
+      });
+      generatedCount = generated.documents.length;
+    }
     form.reset();
-    setNotice("Candidature enregistree.");
+    setNotice(generatedCount ? `Candidature enregistree. ${generationNotice(generatedCount)}` : "Candidature enregistree.");
     setSelectedApplicationId(data.application.id);
     await Promise.all([loadApplicationEvents(data.application.id), loadGeneratedDocuments(data.application.id)]);
     await loadPrivateData();
@@ -492,16 +501,9 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
   }
 
   async function generateDocuments(application: Application, form: HTMLFormElement) {
-    const fields = new FormData(form);
     const data = await api<{ documents: GeneratedDocument[] }>(`/api/applications/${application.id}/generate`, {
       method: "POST",
-      body: JSON.stringify({
-        includeCv: fields.has("includeCv"),
-        includeCoverLetter: fields.has("includeCoverLetter"),
-        includeApproachMessage: fields.has("includeApproachMessage"),
-        cvTemplateId: fields.get("cvTemplateId") || null,
-        coverLetterTemplateId: fields.get("coverLetterTemplateId") || null,
-      }),
+      body: JSON.stringify(generationPayloadFromForm(form)),
     });
     setNotice(generationNotice(data.documents.length));
     await loadGeneratedDocuments(application.id);
@@ -726,7 +728,9 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
           <section className="create-workspace">
             <section className="workspace-panel create-form-panel">
               <PanelTitle title="Creer une candidature" action="Dashboard" onAction={() => setView("dashboard")} />
-              <ApplicationForm jobAxes={jobAxes} onSubmit={(form) => createApplication(form).catch((error) => setNotice(error.message))} />
+              <ApplicationForm jobAxes={jobAxes} onSubmit={(form) => createApplication(form).catch((error) => setNotice(error.message))}>
+                <DocumentGenerationFields templates={templates} />
+              </ApplicationForm>
             </section>
             <aside className="workspace-panel create-options-panel">
               <PanelTitle title="Options de generation" />
@@ -811,28 +815,14 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                 />
                 <div className="detail-columns">
                   <section>
-                    <PanelTitle title="Documents generes" />
-                    <form className="document-options" onSubmit={(event) => {
-                      event.preventDefault();
-                      generateDocuments(selectedApplication, event.currentTarget).catch((error) => setNotice(error.message));
-                    }}>
-                      <label><input name="includeCv" type="checkbox" defaultChecked /> CV</label>
-                      <select name="cvTemplateId" aria-label="Template CV">
-                        <option value="">Template CV par defaut</option>
-                        {templates.filter((template) => template.kind === "cv").map((template) => (
-                          <option key={template.id} value={template.id}>{template.name}</option>
-                        ))}
-                      </select>
-                      <label><input name="includeCoverLetter" type="checkbox" defaultChecked /> Lettre</label>
-                      <select name="coverLetterTemplateId" aria-label="Template lettre">
-                        <option value="">Template lettre par defaut</option>
-                        {templates.filter((template) => template.kind === "cover_letter").map((template) => (
-                          <option key={template.id} value={template.id}>{template.name}</option>
-                        ))}
-                      </select>
-                      <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
-                      <button type="submit">Generer</button>
-                    </form>
+                  <PanelTitle title="Documents generes" />
+                  <form className="document-options" onSubmit={(event) => {
+                    event.preventDefault();
+                    generateDocuments(selectedApplication, event.currentTarget).catch((error) => setNotice(error.message));
+                  }}>
+                    <DocumentGenerationFields templates={templates} />
+                    <button type="submit">Generer</button>
+                  </form>
                     <div className="document-list">
                       {generatedDocuments.map((document) => (
                         <article key={document.id}>
@@ -939,6 +929,7 @@ function ApplicationForm(props: {
   application?: Application;
   jobAxes: JobAxis[];
   submitLabel?: string;
+  children?: React.ReactNode;
   onSubmit: (form: HTMLFormElement) => void;
 }) {
   const application = props.application;
@@ -981,8 +972,31 @@ function ApplicationForm(props: {
         <span>Annonce complete</span>
         <textarea name="fullOfferText" required placeholder="Collez l'annonce ici" defaultValue={application?.fullOfferText ?? ""} />
       </label>
+      {props.children}
       <button type="submit">{props.submitLabel ?? "Enregistrer la candidature"}</button>
     </form>
+  );
+}
+
+function DocumentGenerationFields(props: { templates: Template[] }) {
+  return (
+    <div className="document-options">
+      <label><input name="includeCv" type="checkbox" defaultChecked /> CV</label>
+      <select name="cvTemplateId" aria-label="Template CV">
+        <option value="">Template CV par defaut</option>
+        {props.templates.filter((template) => template.kind === "cv").map((template) => (
+          <option key={template.id} value={template.id}>{template.name}</option>
+        ))}
+      </select>
+      <label><input name="includeCoverLetter" type="checkbox" defaultChecked /> Lettre</label>
+      <select name="coverLetterTemplateId" aria-label="Template lettre">
+        <option value="">Template lettre par defaut</option>
+        {props.templates.filter((template) => template.kind === "cover_letter").map((template) => (
+          <option key={template.id} value={template.id}>{template.name}</option>
+        ))}
+      </select>
+      <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
+    </div>
   );
 }
 
@@ -1139,6 +1153,17 @@ function applicationPayload(form: HTMLFormElement) {
     contractType: fields.contractType || null,
     status: fields.status || "draft",
     appliedAt: fields.appliedAt ? new Date(String(fields.appliedAt)).toISOString() : null,
+  };
+}
+
+function generationPayloadFromForm(form: HTMLFormElement) {
+  const fields = new FormData(form);
+  return {
+    includeCv: fields.has("includeCv"),
+    includeCoverLetter: fields.has("includeCoverLetter"),
+    includeApproachMessage: fields.has("includeApproachMessage"),
+    cvTemplateId: fields.get("cvTemplateId") || null,
+    coverLetterTemplateId: fields.get("coverLetterTemplateId") || null,
   };
 }
 
