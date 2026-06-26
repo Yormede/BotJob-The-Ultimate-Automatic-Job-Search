@@ -48,6 +48,7 @@ type GeneratedDocument = {
   version: number;
   title: string;
   contentText: string;
+  isAtsOneColumn: boolean;
   generatedAt: string;
 };
 type Template = {
@@ -850,7 +851,7 @@ function Dashboard(props: { user: User; onLogout: () => void }) {
                       {generatedDocuments.map((document) => (
                         <article key={document.id}>
                           <strong>{document.title}</strong>
-                          <small>{DOCUMENT_LABELS[document.kind]} v{document.version} - {formatDate(document.generatedAt)}</small>
+                          <small>{DOCUMENT_LABELS[document.kind]} v{document.version} - {document.isAtsOneColumn ? "ATS 1 colonne" : "Structure flexible"} - {formatDate(document.generatedAt)}</small>
                           <div className="document-actions">
                             <button onClick={() => copyDocument(document).catch((error) => setNotice(error.message))}>Copier</button>
                             <button onClick={() => downloadDocument(document)}>Telecharger .txt</button>
@@ -1019,6 +1020,7 @@ function DocumentGenerationFields(props: { templates: Template[] }) {
         ))}
       </select>
       <label><input name="includeApproachMessage" type="checkbox" defaultChecked /> Message</label>
+      <label><input name="allowCvStructureChanges" type="checkbox" /> Autoriser structure CV flexible</label>
     </div>
   );
 }
@@ -1187,6 +1189,7 @@ function generationPayloadFromForm(form: HTMLFormElement) {
     includeApproachMessage: fields.has("includeApproachMessage"),
     cvTemplateId: fields.get("cvTemplateId") || null,
     coverLetterTemplateId: fields.get("coverLetterTemplateId") || null,
+    allowCvStructureChanges: fields.has("allowCvStructureChanges"),
   };
 }
 

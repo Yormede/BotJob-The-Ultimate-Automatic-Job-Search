@@ -44,4 +44,14 @@ describe("generation service", () => {
 
     expect(documents.map((document) => document.templateId)).toEqual(["tpl_cv", "tpl_letter"]);
   });
+
+  test("keeps CV structure by default unless user allows changes", () => {
+    const preserved = buildGeneratedDocuments(application, normalizeGenerationInput({ includeCv: true, includeCoverLetter: false, includeApproachMessage: false }));
+    const flexible = buildGeneratedDocuments(application, normalizeGenerationInput({ includeCv: true, includeCoverLetter: false, includeApproachMessage: false, allowCvStructureChanges: true }));
+
+    expect(preserved[0].isAtsOneColumn).toBe(true);
+    expect(preserved[0].contentText).toContain("Structure du template conservee");
+    expect(flexible[0].isAtsOneColumn).toBe(false);
+    expect(flexible[0].contentText).toContain("Adaptation structurelle autorisee");
+  });
 });

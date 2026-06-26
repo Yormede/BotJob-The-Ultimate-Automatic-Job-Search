@@ -6,6 +6,7 @@ export type GenerationInput = {
   includeApproachMessage: boolean;
   cvTemplateId: string | null;
   coverLetterTemplateId: string | null;
+  allowCvStructureChanges: boolean;
 };
 
 export function normalizeGenerationInput(body: Record<string, unknown> | null): GenerationInput {
@@ -15,6 +16,7 @@ export function normalizeGenerationInput(body: Record<string, unknown> | null): 
     includeApproachMessage: optionalBoolean(body?.includeApproachMessage) ?? true,
     cvTemplateId: optionalId(body?.cvTemplateId),
     coverLetterTemplateId: optionalId(body?.coverLetterTemplateId),
+    allowCvStructureChanges: optionalBoolean(body?.allowCvStructureChanges) ?? false,
   };
 
   if (!input.includeCv && !input.includeCoverLetter && !input.includeApproachMessage) {
@@ -29,7 +31,7 @@ export function buildGeneratedDocuments(
   input: GenerationInput,
 ): GeneratedDocumentInput[] {
   const docs: GeneratedDocumentInput[] = [];
-  if (input.includeCv) docs.push({ ...renderCv(application), templateId: input.cvTemplateId });
+  if (input.includeCv) docs.push({ ...renderCv(application, input), templateId: input.cvTemplateId });
   if (input.includeCoverLetter) {
     docs.push({ ...renderCoverLetter(application), templateId: input.coverLetterTemplateId });
   }
@@ -37,7 +39,7 @@ export function buildGeneratedDocuments(
   return docs;
 }
 
-function renderCv(application: ApplicationForGeneration): GeneratedDocumentInput {
+function renderCv(application: ApplicationForGeneration, input: GenerationInput): GeneratedDocumentInput {
   const title = `CV - ${application.jobTitle} - ${application.company}`;
   const content = [
     `${application.userFirstName} ${application.userLastName}`,
@@ -52,6 +54,11 @@ function renderCv(application: ApplicationForGeneration): GeneratedDocumentInput
     "- PostgreSQL, SQL, JSONB, contraintes et index",
     "- Docker, homelab, GitHub et tests automatises",
     "",
+    "Structure",
+    input.allowCvStructureChanges
+      ? "Adaptation structurelle autorisee pour mieux repondre a l'offre."
+      : "Structure du template conservee: ATS 1 colonne.",
+    "",
     "Adaptation a l'offre",
     shortOffer(application.fullOfferText),
   ].join("\n");
@@ -63,7 +70,7 @@ function renderCv(application: ApplicationForGeneration): GeneratedDocumentInput
     contentText: content,
     htmlContent: `<article><h1>${escapeHtml(application.userFirstName)} ${escapeHtml(application.userLastName)}</h1><h2>${escapeHtml(application.jobTitle)}</h2><p>${escapeHtml(shortOffer(application.fullOfferText))}</p></article>`,
     cssContent: "article{font-family:Arial,sans-serif;line-height:1.45}h1{font-size:24px}h2{font-size:16px;color:#2563eb}",
-    isAtsOneColumn: true,
+    isAtsOneColumn: !input.allowCvStructureChanges,
   };
 }
 
