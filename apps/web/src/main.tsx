@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { buildJobAxisMismatchWarnings } from "../../../src/modules/applications/application-rules";
 import { assistantDecisionFromPrompt } from "../../../src/modules/applications/assistant-rules";
 import "./styles.css";
 
@@ -22,6 +23,7 @@ type DashboardData = {
 };
 type Application = {
   id: string;
+  jobAxisId?: string | null;
   company: string;
   jobTitle: string;
   offerUrl?: string | null;
@@ -992,6 +994,17 @@ function ApplicationForm(props: {
   onSubmit: (form: HTMLFormElement) => void;
 }) {
   const application = props.application;
+  const [jobAxisId, setJobAxisId] = useState(application?.jobAxisId ?? "");
+  const [contractType, setContractType] = useState(application?.contractType ?? "");
+  const [locationLabel, setLocationLabel] = useState(application?.locationLabel ?? "");
+  const [fullOfferText, setFullOfferText] = useState(application?.fullOfferText ?? "");
+  const selectedAxis = props.jobAxes.find((axis) => axis.id === jobAxisId) ?? null;
+  const axisWarnings = buildJobAxisMismatchWarnings(selectedAxis, {
+    contractType,
+    locationLabel,
+    fullOfferText,
+  });
+
   return (
     <form className="resource-form" onSubmit={(event) => { event.preventDefault(); props.onSubmit(event.currentTarget); }}>
       <div className="split">
@@ -1001,7 +1014,11 @@ function ApplicationForm(props: {
       <div className="split">
         <label className="field">
           <span>Axe</span>
-          <select name="jobAxisId">
+          <select
+            name="jobAxisId"
+            defaultValue={application?.jobAxisId ?? ""}
+            onChange={(event) => setJobAxisId(event.target.value)}
+          >
             <option value="">Aucun axe</option>
             {props.jobAxes.map((axis) => <option key={axis.id} value={axis.id}>{axis.title}</option>)}
           </select>
@@ -1020,8 +1037,20 @@ function ApplicationForm(props: {
         </label>
       </div>
       <div className="split">
-        <Field name="locationLabel" placeholder="Lieu" required={false} defaultValue={application?.locationLabel ?? ""} />
-        <Field name="contractType" placeholder="Contrat" required={false} defaultValue={application?.contractType ?? ""} />
+        <Field
+          name="locationLabel"
+          placeholder="Lieu"
+          required={false}
+          defaultValue={application?.locationLabel ?? ""}
+          onChange={(event) => setLocationLabel(event.target.value)}
+        />
+        <Field
+          name="contractType"
+          placeholder="Contrat"
+          required={false}
+          defaultValue={application?.contractType ?? ""}
+          onChange={(event) => setContractType(event.target.value)}
+        />
       </div>
       <div className="split">
         <Field name="offerUrl" type="url" placeholder="URL de l'offre" required={false} defaultValue={application?.offerUrl ?? ""} />
@@ -1029,8 +1058,21 @@ function ApplicationForm(props: {
       </div>
       <label className="field">
         <span>Annonce complete</span>
-        <textarea name="fullOfferText" required placeholder="Collez l'annonce ici" defaultValue={application?.fullOfferText ?? ""} />
+        <textarea
+          name="fullOfferText"
+          required
+          placeholder="Collez l'annonce ici"
+          defaultValue={application?.fullOfferText ?? ""}
+          onChange={(event) => setFullOfferText(event.target.value)}
+        />
       </label>
+      {axisWarnings.length > 0 && (
+        <div className="axis-warning" role="status">
+          {axisWarnings.map((warning) => (
+            <p key={warning}>{warning}</p>
+          ))}
+        </div>
+      )}
       {props.children}
       <button type="submit">{props.submitLabel ?? "Enregistrer la candidature"}</button>
     </form>

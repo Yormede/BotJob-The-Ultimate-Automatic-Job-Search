@@ -880,6 +880,20 @@ button:active {
   margin-top: 14px;
 }
 
+.axis-warning {
+  display: grid;
+  gap: 8px;
+  border: 1px solid #6b4c14;
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(107, 76, 20, 0.18);
+  color: #ffd89b;
+}
+
+.axis-warning p {
+  margin: 0;
+}
+
 .document-options {
   display: flex;
   flex-wrap: wrap;
